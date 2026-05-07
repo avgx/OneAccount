@@ -1,6 +1,6 @@
 import Foundation
 
-public actor AccountStore {
+public actor AccountManager {
     private var cache: [AccountID: AccountRecord] = [:]
     private let persistence: AccountPersistence?
     private var isLoaded = false
@@ -154,4 +154,3 @@ public actor AccountStore {
         isLoaded = false
     }
 }
-

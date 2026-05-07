@@ -1,6 +1,6 @@
 import Foundation
 
-/// Chooses how ``AccountStore`` persists ``AccountRecord`` data. Mostly for tests
+/// Chooses how ``AccountManager`` persists ``AccountRecord`` data. Mostly for tests
 public enum AccountStorage: Sendable {
     /// In-process only; nothing is written to disk.
     case memory
@@ -23,7 +23,7 @@ extension AccountStorage {
         }
     }
 
-    public func makeStore() -> AccountStore {
-        AccountStore(persistence: makePersistence())
+    public func makeManager() -> AccountManager {
+        AccountManager(persistence: makePersistence())
     }
 }

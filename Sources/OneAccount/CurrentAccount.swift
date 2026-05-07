@@ -8,7 +8,7 @@ import SSLPinning
 
 @MainActor
 public final class CurrentAccount: ObservableObject {
-    let store: AccountStore
+    let manager: AccountManager
     
     let pathStatistics: PathStatistics = PathStatistics()
     private let accountChangedHub = Hub<Changed>()
@@ -26,8 +26,8 @@ public final class CurrentAccount: ObservableObject {
         await accountChangedHub.subscribe()
     }
     
-    init(store: AccountStore) {
-        self.store = store
+    init(manager: AccountManager) {
+        self.manager = manager
     }
     
     public func statistics() async -> [String: PathRequestStatistics] {
@@ -52,7 +52,7 @@ public final class CurrentAccount: ObservableObject {
         var nextHTTP: HTTPClient?
         
         // Load and apply new session/client if account exists
-        if let id = id, let account = try? await store.get(id) {
+        if let id = id, let account = try? await manager.get(id) {
             let selectedAuth = makeAuth(for: account) ?? Auth()
             self.auth = selectedAuth
             
@@ -81,7 +81,7 @@ public final class CurrentAccount: ObservableObject {
     
     public func current() async -> AccountRecord? {
         guard let id = selectedId else { return nil }
-        return try? await store.get(id)
+        return try? await manager.get(id)
     }
     
     public func currentId() -> AccountID? {

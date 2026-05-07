@@ -2,7 +2,7 @@ import SwiftUI
 import OneAccount
 
 struct AccountsListView: View {
-    let store: AccountStore
+    let manager: AccountManager
     @State private var accounts: [AccountRecord] = []
     @State private var errorMessage: String?
     
@@ -33,7 +33,7 @@ struct AccountsListView: View {
     
     private func loadAccounts() async {
         do {
-            accounts = try await store.getAll()
+            accounts = try await manager.getAll()
         } catch {
             errorMessage = "Failed to load: \(error.localizedDescription)"
         }
