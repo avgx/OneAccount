@@ -44,45 +44,45 @@ private func sampleRecord(id: AccountID = UUID(), user: String = "user") -> Acco
 
 @Test func accountStorageFactoryUserDefaults() async throws {
     let prefix = "OA.F.\(UUID().uuidString)"
-    let manager = AccountStorage.userDefaults(keyPrefix: prefix).makeManager()
+    let store = AccountStorage.userDefaults(keyPrefix: prefix).makeStore()
 
     let record = sampleRecord()
-    try await manager.save(record)
-    try await manager.loadIfNeeded()
-    let loaded = try await manager.get(record.id)
+    try await store.save(record)
+    try await store.loadIfNeeded()
+    let loaded = try await store.get(by: record.id)
     #expect(loaded?.id == record.id)
     #expect(loaded?.user == record.user)
 
-    try await manager.deleteAll()
+    try await store.deleteAll()
 }
 
 @Test func securePersistenceRoundTrip() async throws {
     let service = "Tests.OneAccount.Keychain.\(UUID().uuidString)"
     let prefix = "Kc"
-    let manager = AccountStorage.keychain(keyPrefix: prefix, service: service).makeManager()
+    let store = AccountStorage.keychain(keyPrefix: prefix, service: service).makeStore()
 
     let a = sampleRecord()
     let b = sampleRecord()
 
-    try await manager.save(a)
-    try await manager.save(b)
+    try await store.save(a)
+    try await store.save(b)
 
-    let ids = try await manager.getAllIDs()
+    let ids = try await store.getAllIDs()
     #expect(Set(ids) == [a.id, b.id])
 
-    try await manager.delete(a.id)
-    #expect(try await manager.getAllIDs() == [b.id])
+    try await store.delete(a.id)
+    #expect(try await store.getAllIDs() == [b.id])
 
-    try await manager.deleteAll()
-    #expect(try await manager.getAllIDs().isEmpty)
+    try await store.deleteAll()
+    #expect(try await store.getAllIDs().isEmpty)
 }
 
 @Test func accountStorageMemoryHasNoPersistence() async throws {
-    let manager = AccountStorage.memory.makeManager()
+    let store = AccountStorage.memory.makeStore()
     let id = UUID()
-    try await manager.save(sampleRecord(id: id))
-    #expect(try await manager.get(id) != nil)
-    await manager.clearCache()
-    try await manager.load()
-    #expect(try await manager.get(id) == nil)
+    try await store.save(sampleRecord(id: id))
+    #expect(try await store.get(by: id) != nil)
+    await store.clearCache()
+    try await store.load()
+    #expect(try await store.get(by: id) == nil)
 }

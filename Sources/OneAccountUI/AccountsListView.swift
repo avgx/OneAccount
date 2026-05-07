@@ -2,12 +2,11 @@ import SwiftUI
 import OneAccount
 
 struct AccountsListView: View {
-    let manager: AccountManager
-    @State private var accounts: [AccountRecord] = []
+    @EnvironmentObject private var accountManager: AccountManager
     @State private var errorMessage: String?
     
     var body: some View {
-        List(accounts) { account in
+        List(accountManager.accounts) { account in
             VStack(alignment: .leading) {
                 Text(account.name ?? "")
                     .font(.headline)
@@ -33,7 +32,7 @@ struct AccountsListView: View {
     
     private func loadAccounts() async {
         do {
-            accounts = try await manager.getAll()
+            try await accountManager.refresh()
         } catch {
             errorMessage = "Failed to load: \(error.localizedDescription)"
         }
