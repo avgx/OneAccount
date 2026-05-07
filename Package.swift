@@ -71,6 +71,7 @@ let package = Package(
                 .product(name: "DebugThings", package: "DebugThings"),
                 .product(name: "URLKit", package: "URLKit"),
                 .product(name: "HTTP", package: "Get"),
+                .product(name: "WS", package: "Get"),
             ]
         ),
     ]

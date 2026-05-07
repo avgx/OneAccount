@@ -25,7 +25,7 @@ extension CurrentAccount {
                 policy: .init(margin: 60),
                 refresher: CloudSessionRefresher(baseURL: account.baseURL),
                 onPersist: { [weak self] session in
-                    try? await self?.manager.updateSession(accountID: account.id, session: session)
+                    try? await self?.store.updateSession(accountID: account.id, session: session)
                 }
             )
         case .next:
@@ -33,7 +33,7 @@ extension CurrentAccount {
                 policy: .init(margin: 60),
                 refresher: NextSessionRefresher(baseURL: account.baseURL),
                 onPersist: { [weak self] session in
-                    try? await self?.manager.updateSession(accountID: account.id, session: session)
+                    try? await self?.store.updateSession(accountID: account.id, session: session)
                 }
             )
         case .nextLegacy:
