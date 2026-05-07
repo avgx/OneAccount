@@ -63,19 +63,28 @@ import Logging
     let first = await firstWebSocketMessage(in: stream1)
     #expect(first != nil, "No WebSocket message before refresh (events stream idle?).")
 
+    print("first message \(String(describing: first))")
+    
     let tokenAfterRefresh = try await auth.refresh()
     #expect(tokenAfterRefresh != jwt, "renew2 should issue a new access token string.")
+    print("tokenAfterRefresh \(tokenAfterRefresh)")
 
     await socket.disconnect()
-
+    print("after disconnect")
+    
+    try? await Task.sleep(nanoseconds: NSEC_PER_SEC)
+    print("after sleep")
+    
     let stream2 = await socket.messages()
     await socket.connect()
     guard await webSocketReachedConnected(socket) else { return }
 
     let second = await firstWebSocketMessage(in: stream2)
     #expect(second != nil, "No WebSocket message after reconnect with refreshed token.")
-
+    print("second message \(String(describing: second))")
+    
     await socket.disconnect()
+    print("after 2 disconnect")
 }
 
 private func webSocketReachedConnected(_ socket: WebSocket) async -> Bool {
