@@ -8,20 +8,16 @@ import DebugThings
 import Logging
 @testable import OneAccount
 
-/// Requires: `NEXT_URL`, `NEXT_USER`, `NEXT_PASSWORD`
-/// Request:
-/// POST `v1/authentication/authenticate_ex2` with `{"user_name":"...","password":"..."}`
-/// Response: 200
-/// `{"error_code":"AUTHENTICATE_CODE_OK","token_name":"auth_token","token_value":"...", ...}`
-/// Refresh in 5 minutes or faster with `v1/authentication/renew2`
+/// Requires: `NEXT_URL`, `NEXT_USER`, `NEXT_PASSWORD` (omit `.env` in CI to skip meaningful run).
+/// POST `v1/authentication/authenticate_ex2` … then WebSocket `events` with Bearer via ``AuthInterceptor``;
+/// refresh via `renew2`, disconnect, reconnect — second handshake must use the new token.
 @Test func readWSEventsWithTokenRefresh() async throws {
     let env = DotEnv.merged
     guard let urlString = env["NEXT_URL"], !urlString.isEmpty, let url = URL(string: urlString),
           let user = env["NEXT_USER"], !user.isEmpty,
-          let password = env["NEXT_PASSWORD"], !password.isEmpty,
-          let clientIdPrefix = env["CLIENT_ID_PREFIX"], !clientIdPrefix.isEmpty
+          let password = env["NEXT_PASSWORD"], !password.isEmpty
     else {
-        Issue.record("Set NEXT_URL, NEXT_USER, NEXT_PASSWORD, CLIENT_ID_PREFIX in .env to run this test.")
+        Issue.record("Set NEXT_URL, NEXT_USER, NEXT_PASSWORD in .env to run this test.")
         return
     }
     DebugThings.bootstrapOSLog(level: .debug)
@@ -29,7 +25,7 @@ import Logging
     let authClient = HTTPClient(
         observer: LoggingRequestObserver(logger: Logger(label: "auth")),
     )
-    
+
     let authenticateResult = try await authClient.send(NextApi.authenticate(user: user, password: password), with: builder)
     #expect(authenticateResult.value.error_code == .AUTHENTICATE_CODE_OK)
     #expect(authenticateResult.value.token_name == "auth_token")
@@ -38,45 +34,51 @@ import Logging
     let decoded = try decode(jwt: jwt)
     #expect(decoded.expiresAt != nil)
     #expect(decoded.expiresAt! > Date())
-    
-    print(authenticateResult.value.token_value ?? "no token")
-    
-    let auth = Auth(policy: .init(margin: 290), refresher: NextSessionRefresher(baseURL: url))
+
+    let auth = Auth(policy: .init(margin: 60), refresher: NextSessionRefresher(baseURL: url))
     await auth.setSession(.next(.init(authToken: jwt)))
-    
-    
-    let client = HTTPClient(
-        configuration: .ephemeral,
-        interceptor: AuthInterceptor(auth: auth),
-        observer: LoggingRequestObserver(),
-        logger: SimpleURLSessionTaskLogger(label: "work", logReceiveData: true)
-    )
-    
+
     var configuration = WebSocket.Configuration.default
     configuration.serverTrustPolicy = .system
     configuration.connectionHandshakeTimeout = 25
-    
-    //TODO: это выглядит очень некрасиво!
-    var eventsUrl = try builder.url(for: Request(path: "events", method: .get))
-    var eventsUrlComponents = URLComponents(url: eventsUrl, resolvingAgainstBaseURL: false)
-    eventsUrlComponents?.scheme = eventsUrl.scheme?.replacingOccurrences(of: "http", with: "ws")
-    eventsUrl = eventsUrlComponents?.url ?? eventsUrl
-    var request = URLRequest(url: eventsUrl)
-    request.setValue("Bearer \(jwt)", forHTTPHeaderField: "Authorization")
-    
-    let socket = WebSocket(request: request, configuration: configuration)
-    
-    let stream = await socket.messages()
+
+    let eventsUrl = try webSocketURL(builder: builder, path: "events")
+    let request = URLRequest(url: eventsUrl)
+
+    let socket = WebSocket(request: request, configuration: configuration, requestAdapter: AuthInterceptor(auth: auth))
+
+    let stream1 = await socket.messages()
 
     let stateTask = Task {
         let stateStream = await socket.connectionStateUpdates()
         for await state in stateStream {
-            print("[WS long listen] state: \(String(describing: state))")
+            print("[WS] state: \(String(describing: state))")
         }
     }
     defer { stateTask.cancel() }
 
     await socket.connect()
+    guard await webSocketReachedConnected(socket) else { return }
+
+    let first = await firstWebSocketMessage(in: stream1)
+    #expect(first != nil, "No WebSocket message before refresh (events stream idle?).")
+
+    let tokenAfterRefresh = try await auth.refresh()
+    #expect(tokenAfterRefresh != jwt, "renew2 should issue a new access token string.")
+
+    await socket.disconnect()
+
+    let stream2 = await socket.messages()
+    await socket.connect()
+    guard await webSocketReachedConnected(socket) else { return }
+
+    let second = await firstWebSocketMessage(in: stream2)
+    #expect(second != nil, "No WebSocket message after reconnect with refreshed token.")
+
+    await socket.disconnect()
+}
+
+private func webSocketReachedConnected(_ socket: WebSocket) async -> Bool {
     let state = await socket.connectionState()
     guard case .connected = state else {
         if case let .disconnected(reason) = state {
@@ -85,40 +87,43 @@ import Logging
             Issue.record("WebSocket did not reach connected state: \(String(describing: state))")
         }
         await socket.disconnect()
-        return
+        return false
     }
+    return true
+}
 
-    let tenMinutesNanos: UInt64 = 600 * 1_000_000_000
-    await withTaskGroup(of: Void.self) { group in
+/// Same path as HTTP GET against `builder`, with scheme `http`→`ws` / `https`→`wss`.
+private func webSocketURL(builder: RequestBuilder, path: String) throws -> URL {
+    let httpURL = try builder.url(for: Request(path: path, method: .get))
+    guard var components = URLComponents(url: httpURL, resolvingAgainstBaseURL: false) else {
+        return httpURL
+    }
+    if let scheme = components.scheme?.lowercased() {
+        components.scheme = scheme.replacingOccurrences(of: "http", with: "ws")
+    }
+    return components.url ?? httpURL
+}
+
+private func firstWebSocketMessage(
+    in stream: AsyncStream<URLSessionWebSocketTask.Message>,
+    timeoutNanoseconds: UInt64 = 30_000_000_000
+) async -> URLSessionWebSocketTask.Message? {
+    await withTaskGroup(of: URLSessionWebSocketTask.Message?.self) { group in
         group.addTask {
             for await message in stream {
-                print("ws \(message)")
+                return message
             }
+            return nil
         }
         group.addTask {
-            try? await Task.sleep(nanoseconds: tenMinutesNanos)
+            try? await Task.sleep(nanoseconds: timeoutNanoseconds)
+            return nil
         }
-        await group.next()
+        guard let winner = await group.next() else {
+            group.cancelAll()
+            return nil
+        }
         group.cancelAll()
+        return winner
     }
-
-    await socket.disconnect()
-//
-//    var i = 0
-//    while true {
-//        do {
-//            try await Task.sleep(nanoseconds: 1_000_000_000)
-//            let res = try await client.send(NextApi.test(), with: builder)
-//            
-//            print("\(Date()) \(String(describing: res.statusCode))")
-//            i += 1
-//            if i > 20 {
-//                break
-//            }
-//        } catch {
-//            print("\(error) - \(error.localizedDescription)")
-//        }
-//    }
-//    
-//    _ = try await client.send(NextApi.close(), with: builder)
 }
