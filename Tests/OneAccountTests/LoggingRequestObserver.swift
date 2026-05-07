@@ -3,11 +3,11 @@ import HTTP
 import DebugThings
 import Logging
 
-final class LoggingRequestObserver: RequestObserver, @unchecked Sendable {
-    let inner: SimpleNetworkLogger
+final class LoggingRequestObserver: RequestObserver, Sendable {
+    let inner: SimpleHttpLogger
     
     init(logger: Logger = Logger(label: "http")) {
-        self.inner = SimpleNetworkLogger(logger: logger, logBody: true) //TODO: Sendable
+        self.inner = SimpleHttpLogger(logger: logger, logBody: true)
     }
     
     func willSend(_ request: URLRequest) async {

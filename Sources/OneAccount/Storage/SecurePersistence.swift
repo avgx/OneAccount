@@ -2,11 +2,8 @@ import Foundation
 import Security
 
 /// Stores each `AccountRecord` as a JSON blob in the Keychain.
-///
-/// Items are scoped by `kSecAttrService` (see `service`) and `kSecAttrAccount` = `"\(keyPrefix).\(uuid)"`, matching ``UserDefaultsPersistence`` account key shape.
-///
-/// Sharing items between the app and extensions is configured via **Keychain Access Groups** in the app’s entitlements; this type does not set `kSecAttrAccessGroup`.
-final class SecureAccountPersistence: AccountPersistence, @unchecked Sendable {
+/// Items are scoped by `kSecAttrService` (see `service`) and `kSecAttrAccount` = `"\(keyPrefix).\(uuid)"`,
+final class SecurePersistence: AccountPersistence, @unchecked Sendable {
     private let keyPrefix: String
     private let service: String
     private let encoder: JSONEncoder

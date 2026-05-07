@@ -1,16 +1,18 @@
 import Foundation
 
-//TODO: нужно вписать в ответ `AuthV3`
-//{"needOTPCheck":true,"totpEnabledProviders":["microsoft"]}
-//OTP code from Microsoft Authenticator app
-//{"enabledOTP":true,"needOTPCheck":true,"totpEnabledProviders":["microsoft"]}
-//both
-//{"enabledOTP":true,"needOTPCheck":true}
-//email otp
-
-struct OtpErrorValue : Codable, Sendable {
-    let otpLoginAttemptsLeft: String
-    let otpLoginRetryAfterSec: String
+public struct OtpErrorValue: Codable, Sendable {
+    public let otpLoginAttemptsLeft: String?
+    public let otpLoginRetryAfterSec: String?
+    
+    public var attemptsLeft: Int? {
+        guard let otpLoginAttemptsLeft else { return nil }
+        return Int(otpLoginAttemptsLeft)
+    }
+    
+    public var retryAfterSeconds: Int? {
+        guard let otpLoginRetryAfterSec else { return nil }
+        return Int(otpLoginRetryAfterSec)
+    }
 }
 
 //            {

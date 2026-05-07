@@ -1,6 +1,6 @@
 import Foundation
 
-struct AuthV3 : Codable, Sendable {
+public struct AuthV3: Codable, Sendable {
     public let accessToken: String?
     public let refreshToken: String?
     public let warning: String?
@@ -17,8 +17,7 @@ struct AuthV3 : Codable, Sendable {
     public let totpEnabledProviders: [String]?  //["microsoft"] OTP code from Microsoft Authenticator app
 }
 
-//TODO: есть обобщенные структуры. Но непонятно как вывести одновременно и CloudObjectResponse и CloudErrorResponse вместо конкретной AuthV3. Нужно разобраться и потом удалить.
-public struct CloudObjectResponse<T: Codable> : Codable {
+public struct CloudObjectResponse<T: Codable>: Codable {
     public let result: String
     public let statusCode: Int
     public let messageKey: String?
@@ -29,7 +28,7 @@ public struct CloudObjectResponse<T: Codable> : Codable {
     public let resultObject: T?
 }
 
-public struct CloudArrayResponse<T: Codable> : Codable {
+public struct CloudArrayResponse<T: Codable>: Codable {
     public let result: String
     public let statusCode: Int
     public let messageKey: String?
@@ -40,7 +39,7 @@ public struct CloudArrayResponse<T: Codable> : Codable {
     public let resultObject: [T]
 }
 
-public struct CloudErrorResponse<T: Codable> : Codable {
+public struct CloudErrorResponse<T: Codable>: Codable {
     public let code: Int?
     public let description: String?
     public let key: String?

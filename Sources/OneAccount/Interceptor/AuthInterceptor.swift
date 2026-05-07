@@ -17,16 +17,20 @@ public final class AuthInterceptor: RequestInterceptor, @unchecked Sendable {
     }
 
     public func retry(_ request: URLRequest, dueTo error: Error) async -> Bool {
-        guard let http = error as? HTTPError else { return false }
-        //TODO: надо проверить вероятно ещё и 403 а не только 401. посмотреть по реальному подключению
-        //TODO: может быть перезапросить при 500+?
-        guard http.statusCodeIfUnacceptable == 401 else { return false }
+        guard let http = error as? HTTPError, let statusCode = http.statusCodeIfUnacceptable else { return false }
+        guard shouldRefresh(for: statusCode) else { return false }
         do {
             _ = try await auth.refresh()
             return true
         } catch {
             return false
         }
+    }
+    
+    /// Refresh token only when auth is likely expired/revoked.
+    /// 5xx are server-side and usually not fixed by token refresh.
+    private func shouldRefresh(for statusCode: Int) -> Bool {
+        return statusCode == 401 //|| statusCode == 403
     }
 }
 

@@ -121,7 +121,7 @@ public actor AccountStore {
         try save(account)
     }
     
-    public func updatePassword(accountID: AccountID, password: String?) throws {
+    public func updatePassword(accountID: AccountID, password: String) throws {
         guard var account = try get(accountID) else {
             throw PersistenceError.accountNotFound(accountID)
         }

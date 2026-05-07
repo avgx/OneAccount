@@ -1,68 +1,37 @@
 import Foundation
+import Combine
+import HTTP
+import DebugThings
+import SSLPinning
 
-//TODO: CurrentAccount это для использования в SwiftUI
-
-//TODO: может добавить
-//public var http: HTTPClient
-//TODO: может сделать так:
-//@MainActor public final class CurrentAccount: ObservableObject
-//@Published public private(set) var account: AccountRecord = .invalid
-//public func setAccount(id: AccountID?)
-//TODO: может использовать AccountStorage а AccountStore вообще сделать внутренним?
+//TODO: при смене настроек надо пересоздавать `HTTPClient`
 
 @MainActor
 public final class CurrentAccount: ObservableObject {
-    public struct Changed: Sendable {
-        public enum Phase: Sendable { case willChange, didChange }
-        public let phase: Phase
-        public let oldId: UUID?
-        public let newId: UUID?
-        
-        public init(phase: Phase, oldId: UUID?, newId: UUID?) {
-            self.phase = phase
-            self.oldId = oldId
-            self.newId = newId
-        }
-    }
+    let store: AccountStore
     
-    private let store: AccountStore
-    private var auth: Auth
-    private var selectedId: AccountID?
-    
+    let pathStatistics: PathStatistics = PathStatistics()
     private let accountChangedHub = Hub<Changed>()
+    
+    private var auth: Auth?
+    
+    public var serverTrustPolicy: ServerTrustPolicy = .system
+    public var logger: (any URLSessionTaskLogger)? = nil
+    
+    @Published public private(set) var account: AccountRecord?
+    @Published public private(set) var http: HTTPClient?
+    @Published public private(set) var selectedId: AccountID?
     
     public func accountChanged() async -> AsyncStream<Changed> {
         await accountChangedHub.subscribe()
     }
     
-    public init(storage: AccountStorage) {
-        self.store = storage.makeStore()
-        self.auth = Auth()  //TODO: .invalid ?
+    init(store: AccountStore) {
+        self.store = store
     }
     
-    private func makeAuth(for account: AccountRecord) -> Auth? {
-        switch account.backend {
-        case .cloud:
-            Auth(
-                policy: .init(margin: 60),
-                refresher: CloudSessionRefresher(baseURL: account.baseURL),
-                onPersist: { [weak self] session in
-                    try? await self?.store.updateSession(accountID: account.id, session: session)
-                }
-            )
-        case .next:
-            Auth(
-                policy: .init(margin: 60),
-                refresher: NextSessionRefresher(baseURL: account.baseURL),
-                onPersist: { [weak self] session in
-                    try? await self?.store.updateSession(accountID: account.id, session: session)
-                }
-            )
-        case .nextLegacy:
-            nil
-        case .intl:
-            nil
-        }
+    public func statistics() async -> [String: PathRequestStatistics] {
+        await pathStatistics.snapshot()
     }
     
     public func selectAccount(id: AccountID?) async {
@@ -76,20 +45,31 @@ public final class CurrentAccount: ObservableObject {
         ))
         
         // Reset auth state
-        await auth.reset()
+        await auth?.reset()
+        await pathStatistics.reset()
         
-        // Load and apply new session if exists
+        var nextAccount: AccountRecord?
+        var nextHTTP: HTTPClient?
+        
+        // Load and apply new session/client if account exists
         if let id = id, let account = try? await store.get(id) {
-            if let auth = makeAuth(for: account) {
-                self.auth = auth
-                if let session = account.session {
-                    await auth.setSession(session)
-                }
+            let selectedAuth = makeAuth(for: account) ?? Auth()
+            self.auth = selectedAuth
+            
+            if let session = account.session {
+                await selectedAuth.setSession(session)
             }
+            
+            nextAccount = account
+            let client = makeHTTPClient(for: account, auth: selectedAuth)
+            nextHTTP = client
             selectedId = id
         } else {
             selectedId = nil
         }
+        
+        self.account = nextAccount
+        self.http = nextHTTP
         
         // Notify didChange
         await accountChangedHub.publish(Changed(

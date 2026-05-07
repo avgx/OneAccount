@@ -6,10 +6,10 @@ private func sampleRecord(id: AccountID = UUID(), user: String = "user") -> Acco
     AccountRecord(
         id: id,
         baseURL: URL(string: "https://example.com")!,
-        backend: .next,
         user: user,
-        password: nil,
+        password: "",
         name: nil,
+        backend: .next,
         session: .next(NextSession(authToken: "test-access-token"))
     )
 }
@@ -56,25 +56,25 @@ private func sampleRecord(id: AccountID = UUID(), user: String = "user") -> Acco
     try await store.deleteAll()
 }
 
-@Test func securePersistenceRoundTrip() throws {
+@Test func securePersistenceRoundTrip() async throws {
     let service = "Tests.OneAccount.Keychain.\(UUID().uuidString)"
     let prefix = "Kc"
-    let p = SecureAccountPersistence(keyPrefix: prefix, service: service)
+    let store = AccountStorage.keychain(keyPrefix: prefix, service: service).makeStore()
 
     let a = sampleRecord()
     let b = sampleRecord()
 
-    try p.save(account: a)
-    try p.save(account: b)
+    try await store.save(a)
+    try await store.save(b)
 
-    let ids = try p.getAllIDs()
+    let ids = try await store.getAllIDs()
     #expect(Set(ids) == [a.id, b.id])
 
-    try p.delete(accountID: a.id)
-    #expect(try p.getAllIDs() == [b.id])
+    try await store.delete(a.id)
+    #expect(try await store.getAllIDs() == [b.id])
 
-    try p.deleteAll()
-    #expect(try p.getAllIDs().isEmpty)
+    try await store.deleteAll()
+    #expect(try await store.getAllIDs().isEmpty)
 }
 
 @Test func accountStorageMemoryHasNoPersistence() async throws {
