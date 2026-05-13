@@ -21,14 +21,11 @@ public struct NextSessionRefresher: SessionRefresher {
             throw URLError(.userAuthenticationRequired)
         }
         
-        let client = HTTPClient(
-            interceptor: FixedAuthInterceptor(authorization: .bearer(session.authToken)),
-            //observer: LoggingRequestObserver(logger: Logger(label: "auth")),
-            //logger: SimpleURLSessionTaskLogger(label: "auth", logReceiveData: true)
+        let (client, builder) = BearerRefreshTransport.jsonClientAndBuilder(
+            baseURL: baseURL,
+            bearerToken: session.authToken
         )
-        
-        let builder = RequestBuilder.json(baseURL: baseURL, encoder: JSONEncoder())
-        
+
         let response = try await client.send(NextApi.renew(), with: builder).value
 
         print(response)

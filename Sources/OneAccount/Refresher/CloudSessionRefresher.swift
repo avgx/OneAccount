@@ -23,17 +23,11 @@ public struct CloudSessionRefresher: SessionRefresher {
             throw URLError(.userAuthenticationRequired)
         }
 
-        let client = HTTPClient(
-            interceptor: FixedAuthInterceptor(authorization: .bearer(session.refreshToken)),
-            //observer: LoggingRequestObserver(logger: Logger(label: "auth")),
-            //logger: SimpleURLSessionTaskLogger(label: "auth", logReceiveData: true)
-        )
-        
-        let builder = RequestBuilder.json(
+        let (client, builder) = BearerRefreshTransport.jsonClientAndBuilder(
             baseURL: baseURL,
-            encoder: JSONEncoder()
+            bearerToken: session.refreshToken
         )
-        
+
         let response = try await client.send(CloudApi.refreshTokens(), with: builder).value
 
         print(response)

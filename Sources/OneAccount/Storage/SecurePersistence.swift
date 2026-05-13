@@ -2,15 +2,13 @@ import Foundation
 import Security
 
 /// Stores each `AccountRecord` as a JSON blob in the Keychain.
-/// Items are scoped by `kSecAttrService` (see `service`) and `kSecAttrAccount` = `"\(keyPrefix).\(uuid)"`,
+/// Items are scoped by `kSecAttrService` (see `service`) and `kSecAttrAccount` = `"\(keyPrefix).\(uuid)"`.
 final class SecurePersistence: AccountPersistence, @unchecked Sendable {
     private let keyPrefix: String
     private let service: String
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
 
-    /// - Parameters:
-    ///   - service: `kSecAttrService` — isolates OneAccount entries from other Keychain items.
     init(
         keyPrefix: String = "OneAccount",
         service: String? = nil,
@@ -29,36 +27,43 @@ final class SecurePersistence: AccountPersistence, @unchecked Sendable {
 
     private let accessibility: CFString = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
 
-    public func save(account: AccountRecord) throws {
+    func save(account: AccountRecord) async throws {
         let accountKey = accountKey(for: account.id)
         let data = try encoder.encode(account)
-        try deleteItem(accountKey: accountKey)
-        let query: [String: Any] = [
+        let matchQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: accountKey,
+        ]
+        let attributes: [String: Any] = [
             kSecValueData as String: data,
             kSecAttrAccessible as String: accessibility,
         ]
-        let status = SecItemAdd(query as CFDictionary, nil)
+        var status = SecItemUpdate(matchQuery as CFDictionary, attributes as CFDictionary)
+        if status == errSecItemNotFound {
+            var addQuery = matchQuery
+            addQuery[kSecValueData as String] = data
+            addQuery[kSecAttrAccessible as String] = accessibility
+            status = SecItemAdd(addQuery as CFDictionary, nil)
+        }
         guard status == errSecSuccess else {
             throw PersistenceError.writeFailed(NSError(domain: NSOSStatusErrorDomain, code: Int(status)))
         }
     }
 
-    public func load(accountID: AccountID) throws -> AccountRecord? {
+    func load(accountID: AccountID) async throws -> AccountRecord? {
         try loadPayload(accountKey: accountKey(for: accountID))
     }
 
-    public func delete(accountID: AccountID) throws {
+    func delete(accountID: AccountID) async throws {
         try deleteItem(accountKey: accountKey(for: accountID))
     }
 
-    public func exists(accountID: AccountID) throws -> Bool {
-        try load(accountID: accountID) != nil
+    func exists(accountID: AccountID) async throws -> Bool {
+        try loadPayload(accountKey: accountKey(for: accountID)) != nil
     }
 
-    public func loadAll() throws -> [AccountRecord] {
+    func loadAll() async throws -> [AccountRecord] {
         var out: [AccountRecord] = []
         for key in try matchingAccountKeys() {
             if let record = try loadPayload(accountKey: key) {
@@ -68,13 +73,13 @@ final class SecurePersistence: AccountPersistence, @unchecked Sendable {
         return out
     }
 
-    public func deleteAll() throws {
+    func deleteAll() async throws {
         for key in try matchingAccountKeys() {
             try deleteItem(accountKey: key)
         }
     }
 
-    public func getAllIDs() throws -> [AccountID] {
+    func getAllIDs() async throws -> [AccountID] {
         let prefix = "\(keyPrefix)."
         return try matchingAccountKeys().compactMap { accountKey in
             guard accountKey.hasPrefix(prefix) else { return nil }
@@ -83,7 +88,7 @@ final class SecurePersistence: AccountPersistence, @unchecked Sendable {
         }
     }
 
-    // MARK: - Keychain
+    // MARK: - Keychain helpers
 
     private func matchingAccountKeys() throws -> [String] {
         let query: [String: Any] = [

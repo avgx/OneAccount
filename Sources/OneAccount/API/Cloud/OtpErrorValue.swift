@@ -1,6 +1,6 @@
 import Foundation
 
-public struct OtpErrorValue: Codable, Sendable {
+public struct OtpErrorValue: Codable, Sendable, Equatable {
     public let otpLoginAttemptsLeft: String?
     public let otpLoginRetryAfterSec: String?
     

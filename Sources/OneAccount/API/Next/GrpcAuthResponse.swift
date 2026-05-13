@@ -26,7 +26,7 @@ struct CredentialTraits: Codable, Sendable {
     let password_must_be_changed: Bool
 }
 
-enum EAuthenticateCode: String, Codable, Sendable {
+public enum EAuthenticateCode: String, Codable, Sendable {
     case AUTHENTICATE_CODE_OK
     case AUTHENTICATE_CODE_GENERAL_ERROR
     case AUTHENTICATE_CODE_WRONG_CREDENTIALS

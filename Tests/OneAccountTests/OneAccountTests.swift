@@ -180,7 +180,7 @@ import Logging
             .init(
                 email: email,
                 password: password,
-                locale: Locale.current.language.languageCode?.identifier ?? "ru",
+                locale: Locale.current.identifier,
                 clientId: clientId
             )
         ),
@@ -245,44 +245,45 @@ import Logging
         Issue.record("Set CLOUD_TOTP_URL, CLOUD_TOTP_EMAIL, CLOUD_TOTP_PASSWORD, CLOUD_TOTP_SECRET, CLIENT_ID_PREFIX in .env to run this test.")
         return
     }
-    
-    DebugThings.bootstrapOSLog(level: .debug)
-    let builder = RequestBuilder.json(baseURL: url, encoder: JSONEncoder())
-    let authClient = HTTPClient(
-        observer: LoggingRequestObserver(),
-        logger: SimpleURLSessionTaskLogger(label: "login", logReceiveData: true)
-    )
 
-    let clientId = "\(clientIdPrefix).\(UUID().uuidString)"
-    let loginResult = try await authClient.send(
-        CloudApi.login(.init(email: email, password: password, locale: Locale.current.identifier, clientId: clientId)),
-        with: builder
-    )
-    #expect(loginResult.value.needOTPCheck == true)
-    #expect(loginResult.value.totpEnabledProviders?.contains("microsoft") == true)
-    #expect(loginResult.value.accessToken == nil)
-    #expect(loginResult.value.refreshToken == nil)
+    do {
+        DebugThings.bootstrapOSLog(level: .debug)
+        let builder = RequestBuilder.json(baseURL: url, encoder: JSONEncoder())
+        let authClient = HTTPClient(
+            observer: LoggingRequestObserver(),
+            logger: SimpleURLSessionTaskLogger(label: "login", logReceiveData: true)
+        )
 
-    guard let totp = totpCode(secretBase32: secretB32) else {
-        Issue.record("TOTP generation failed (check CLOUD_TOTP_SECRET base32).")
-        return
-    }
+        let clientId = "\(clientIdPrefix).\(UUID().uuidString)"
+        let loginResult = try await authClient.send(
+            CloudApi.login(.init(email: email, password: password, locale: Locale.current.identifier, clientId: clientId)),
+            with: builder
+        )
+        #expect(loginResult.value.needOTPCheck == true)
+        #expect(loginResult.value.totpEnabledProviders?.contains("microsoft") == true)
+        #expect(loginResult.value.accessToken == nil)
+        #expect(loginResult.value.refreshToken == nil)
 
-    let verifyResult = try await authClient.send(
-        CloudApi.totpVerify(.init(email: email, totp: totp, clientId: clientId)),
-        with: builder
-    )
-    #expect(verifyResult.value.accessToken != nil)
-    #expect(verifyResult.value.refreshToken != nil)
-    let jwt = verifyResult.value.accessToken!
-    let rjwt = verifyResult.value.refreshToken!
-    let decoded = try decode(jwt: jwt)
-    #expect(decoded.expiresAt != nil)
-    #expect(decoded.expiresAt! > Date())
-    #expect(decoded.issuer == "Cloud")
-    #expect(decoded.claim(name: "Type").string == "accessToken")
+        guard let totp = totpCode(secretBase32: secretB32) else {
+            Issue.record("TOTP generation failed (check CLOUD_TOTP_SECRET base32).")
+            return
+        }
 
-    let auth = Auth(policy: .init(margin: 24 * 3600.0 - 30.0), refresher: CloudSessionRefresher(baseURL: url))
+        let verifyResult = try await authClient.send(
+            CloudApi.totpVerify(.init(email: email, totp: totp, clientId: clientId)),
+            with: builder
+        )
+        #expect(verifyResult.value.accessToken != nil)
+        #expect(verifyResult.value.refreshToken != nil)
+        let jwt = verifyResult.value.accessToken!
+        let rjwt = verifyResult.value.refreshToken!
+        let decoded = try decode(jwt: jwt)
+        #expect(decoded.expiresAt != nil)
+        #expect(decoded.expiresAt! > Date())
+        #expect(decoded.issuer == "Cloud")
+        #expect(decoded.claim(name: "Type").string == "accessToken")
+
+        let auth = Auth(policy: .init(margin: 24 * 3600.0 - 30.0), refresher: CloudSessionRefresher(baseURL: url))
 //    let auth = Auth(policy: .init(margin: 24 * 3600.0 - 30.0)) { currentSession in
 //        guard case .cloud(let session) = currentSession else {
 //            throw URLError(.userAuthenticationRequired)
@@ -302,15 +303,23 @@ import Logging
 //        }
 //        return .cloud(.init(accessToken: accessToken, refreshToken: refreshToken))
 //    }
-    await auth.setSession(.cloud(.init(accessToken: jwt, refreshToken: rjwt)))
+        await auth.setSession(.cloud(.init(accessToken: jwt, refreshToken: rjwt)))
 
-    let client = HTTPClient(
-        configuration: .ephemeral,
-        interceptor: AuthInterceptor(auth: auth),
-        observer: LoggingRequestObserver(),
-        logger: SimpleURLSessionTaskLogger(label: "work", logReceiveData: true)
-    )
-    _ = try await client.send(CloudApi.test(), with: builder)
-    
-    _ = try await client.send(CloudApi.logout(), with: builder)
+        let client = HTTPClient(
+            configuration: .ephemeral,
+            interceptor: AuthInterceptor(auth: auth),
+            observer: LoggingRequestObserver(),
+            logger: SimpleURLSessionTaskLogger(label: "work", logReceiveData: true)
+        )
+        _ = try await client.send(CloudApi.test(), with: builder)
+
+        _ = try await client.send(CloudApi.logout(), with: builder)
+    } catch {
+        if let http = error as? HTTPError {
+            let mapped = CloudErrorMapping.authServiceError(from: http)
+            if AuthServiceError.isCloudConcurrentSessionLimitExceeded(mapped) { return }
+        }
+        if AuthServiceError.isCloudConcurrentSessionLimitExceeded(error) { return }
+        throw error
+    }
 }
