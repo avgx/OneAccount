@@ -32,12 +32,16 @@ let package = Package(
         .package(url: "https://github.com/avgx/EncodeDecode.git", from: "1.0.1"),
         .package(url: "https://github.com/avgx/URLKit.git", from: "1.0.0"),
         .package(url: "https://github.com/avgx/DebugThings.git", branch: "main"),
-        .package(url: "https://github.com/avgx/Get.git", branch: "dev")
+        .package(url: "https://github.com/avgx/Get.git", branch: "dev"),
+        .package(url: "https://github.com/avgx/ButtonKit", branch: "main"),
+        .package(url: "https://github.com/avgx/SwiftUI-Shimmer", branch: "main"),
+        .package(url: "https://github.com/avgx/OneDiscovery", branch: "main"),
     ],
     targets: [
         .target(
             name: "OneAccount",
             dependencies: [
+                "OneDiscovery",
                 .product(name: "JWTDecode", package: "JWTDecode.swift"),
                 .product(name: "RequestResponse", package: "RequestResponse"),
                 .product(name: "EncodeDecode", package: "EncodeDecode"),
@@ -51,6 +55,7 @@ let package = Package(
             name: "OneAccountUI",
             dependencies: [
                 "OneAccount",
+                "OneDiscovery",
                 .product(name: "JWTDecode", package: "JWTDecode.swift"),
                 .product(name: "RequestResponse", package: "RequestResponse"),
                 .product(name: "EncodeDecode", package: "EncodeDecode"),
@@ -58,6 +63,8 @@ let package = Package(
                 .product(name: "DebugThings", package: "DebugThings"),
                 .product(name: "URLKit", package: "URLKit"),
                 .product(name: "HTTP", package: "Get"),
+                .product(name: "ButtonKit", package: "ButtonKit"),
+                .product(name: "Shimmer", package: "SwiftUI-Shimmer"),
             ]
         ),
         .testTarget(
