@@ -41,7 +41,12 @@ public struct AccountsListView: View {
                 Label("Add account", systemImage: "person.badge.plus")
             }
         }
-        .navigationTitle("Accounts")        
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                EditButton()
+            }
+        }
+        .navigationTitle("Accounts")
         .refreshable {
             await loadAccounts()
         }
