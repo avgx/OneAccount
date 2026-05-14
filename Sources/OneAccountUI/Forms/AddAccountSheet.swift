@@ -73,11 +73,11 @@ public struct AddAccountSheet<WizardContent: View>: View {
                 ToolbarItem(placement: .principal) {
                     wizardToolbarTitle
                 }
-                ToolbarItem(placement: .cancellationAction) {
-                    Button(action: { dismiss() }) {
-                        Image(systemName: "xmark")
-                    }
-                }
+//                ToolbarItem(placement: .cancellationAction) {
+//                    Button(action: { dismiss() }) {
+//                        Image(systemName: "xmark")
+//                    }
+//                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(action: confirmSave) {
                         Group {

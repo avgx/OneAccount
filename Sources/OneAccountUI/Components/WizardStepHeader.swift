@@ -20,9 +20,9 @@ struct WizardStepHeader: View {
     private var fullBody: some View {
         VStack(alignment: .leading, spacing: 8) {
             stepIconsRow(imageScale: .medium, trailingSpacer: true)
-            Text("Step \(current) of \(total)")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+//            Text("Step \(current) of \(total)")
+//                .font(.footnote)
+//                .foregroundStyle(.secondary)
         }
         .padding(.vertical, 4)
     }
@@ -30,9 +30,9 @@ struct WizardStepHeader: View {
     private var compactBody: some View {
         VStack(spacing: 2) {
             stepIconsRow(imageScale: .small, trailingSpacer: false)
-            Text("Step \(current) of \(total)")
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+//            Text("Step \(current) of \(total)")
+//                .font(.caption2)
+//                .foregroundStyle(.secondary)
         }
         .multilineTextAlignment(.center)
     }
@@ -41,6 +41,7 @@ struct WizardStepHeader: View {
         HStack(spacing: 6) {
             ForEach(1 ... total, id: \.self) { index in
                 Image(systemName: index <= current ? "\(index).circle.fill" : "\(index).circle")
+//                Image(systemName: index <= current ? "circle.fill" : "circle")
                     .imageScale(imageScale)
                     .foregroundStyle(index == current ? Color.accentColor : Color.secondary)
             }
