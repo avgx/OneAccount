@@ -60,7 +60,10 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
                 }
             )
         case .next:
-            let refresher: any BackendAuthenticator = NextSessionRefresher(baseURL: account.endpoint.url)
+            let refresher: any BackendAuthenticator = NextSessionRefresher(
+                baseURL: account.endpoint.url,
+                credentials: account.credentials
+            )
             return Auth(
                 policy: .init(margin: 60),
                 refresher: refresher,
