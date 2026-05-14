@@ -1,71 +1,63 @@
 import SwiftUI
 import OneAccount
-import SSLPinning
 
+/// Account list with edit mode and selection. Implemented for iOS and tvOS only.
 public struct AccountsListView: View {
-    @EnvironmentObject private var accountsViewModel: AccountsViewModel
-    @EnvironmentObject private var currentAccount: CurrentAccount
-    @State private var errorMessage: String?
-    @State private var showAddAccount = false
-    @State private var reloginAccount: AccountRecord?
+    @ObservedObject private var accountsViewModel: AccountsViewModel
+    @Binding private var selectedAccountID: AccountID?
 
+    @Environment(\.editMode) private var editMode
     
+    var isEditing: Bool {
+        editMode?.wrappedValue.isEditing ?? false
+    }
+    
+//    #if os(iOS) || os(tvOS)
+//    @State private var editMode: EditMode = .inactive
+//    #endif
 
-    @MainActor var onAddAccount: () -> Void
-    
     public init(
-        onAddAccount: @escaping () -> Void,        
+        accountsViewModel: AccountsViewModel,
+        selectedAccountID: Binding<AccountID?>,
     ) {
-        self.onAddAccount = onAddAccount
+        self._accountsViewModel = ObservedObject(wrappedValue: accountsViewModel)
+        self._selectedAccountID = selectedAccountID
     }
 
     public var body: some View {
         List {
             ForEach(accountsViewModel.accounts) { account in
                 Button {
-                    Task { @MainActor in
-                        await currentAccount.selectAccount(id: account.id)
-                    }
+                    selectedAccountID = account.id
                 } label: {
                     AccountDetailedLabel(
                         account: account,
-                        checkmark: account.id == currentAccount.selectedId
+                        checkmark: account.id == selectedAccountID
                     )
                 }
                 .buttonStyle(.plain)
+                .allowsHitTesting(!isEditing)
             }
-            
-            Button {
-                onAddAccount()
-            } label: {
-                Label("Add account", systemImage: "person.badge.plus")
-            }
-        }
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                EditButton()
-            }
+            .onDelete(perform: deleteAccountsAtOffsets)
         }
         .navigationTitle("Accounts")
-        .refreshable {
-            await loadAccounts()
-        }
-        .task {
-            await loadAccounts()
-        }
-        .alert("Error", isPresented: .constant(errorMessage != nil)) {
-            Button("OK") { errorMessage = nil }
-        } message: {
-            Text(errorMessage ?? "")
-        }
     }
 
-    private func loadAccounts() async {
-        do {
-            try await accountsViewModel.refresh()
-        } catch {
-            errorMessage = "Failed to load: \(error.localizedDescription)"
+    private func deleteAccountsAtOffsets(_ offsets: IndexSet) {
+        print("deleteAccountsAtOffsets \(offsets)")
+        let ids = offsets.map { accountsViewModel.accounts[$0].id }
+        Task { @MainActor in
+            if let selected = selectedAccountID, ids.contains(selected) {
+                selectedAccountID = nil
+            }
+            for id in ids {
+                do {
+                    try await accountsViewModel.delete(id)
+                } catch {
+                    //TODO: show warning
+                    return
+                }
+            }
         }
     }
-
 }
