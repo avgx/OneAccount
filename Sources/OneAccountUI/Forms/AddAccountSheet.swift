@@ -21,7 +21,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
     ) {
         self.onSave = onSave
         self.content = content
-        let auth = AuthService(clientId: clientId) { _ in
+        let auth = AuthService(clientId: clientId, logger: logger) { _ in
             throw AuthServiceError.unsupportedBackend
         }
         _flow = StateObject(
@@ -29,8 +29,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
                 mode: endpointWizardMode,
                 useCases: AccountCreationUseCases(
                     authService: auth,
-                    serverTrustPolicy: serverTrustPolicy,
-                    logger: logger
+                    serverTrustPolicy: serverTrustPolicy
                 )
             )
         )

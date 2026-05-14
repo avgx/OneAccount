@@ -2,12 +2,15 @@ import Foundation
 import HTTP
 import RequestResponse
 import JWTDecode
+import DebugThings
 
 public struct CloudSessionRefresher: SessionRefresher {
     private let baseURL: URL
-
-    public init(baseURL: URL) {
+    private let logger: (any URLSessionTaskLogger)?
+    
+    public init(baseURL: URL, logger: (any URLSessionTaskLogger)? = nil) {
         self.baseURL = baseURL
+        self.logger = logger
     }
 
     public func refresh(_ current: BackendSession?) async throws -> BackendSession {
@@ -25,7 +28,8 @@ public struct CloudSessionRefresher: SessionRefresher {
 
         let (client, builder) = BearerRefreshTransport.jsonClientAndBuilder(
             baseURL: baseURL,
-            bearerToken: session.refreshToken
+            bearerToken: session.refreshToken,
+            logger: logger
         )
 
         let response = try await client.send(CloudApi.refreshTokens(), with: builder).value

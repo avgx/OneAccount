@@ -51,7 +51,10 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
         let accountID = account.id
         switch account.endpoint.backend {
         case .cloud:
-            let refresher: any BackendAuthenticator = CloudSessionRefresher(baseURL: account.endpoint.url)
+            let refresher: any BackendAuthenticator = CloudSessionRefresher(
+                baseURL: account.endpoint.url,
+                logger: logger
+            )
             return Auth(
                 policy: .init(margin: 60),
                 refresher: refresher,
@@ -62,7 +65,8 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
         case .next:
             let refresher: any BackendAuthenticator = NextSessionRefresher(
                 baseURL: account.endpoint.url,
-                credentials: account.credentials
+                credentials: account.credentials,
+                logger: logger
             )
             return Auth(
                 policy: .init(margin: 60),

@@ -8,12 +8,9 @@ public struct AccountCreationUseCases: Sendable {
 
     public init(
         authService: AuthService,
-        serverTrustPolicy: ServerTrustPolicy = .system,
-        logger: (any URLSessionTaskLogger)? = nil
+        serverTrustPolicy: ServerTrustPolicy = .system
     ) {
-        var svc = authService
-        svc.logger = logger
-        self.authService = svc
+        self.authService = authService
         self.serverTrustPolicy = serverTrustPolicy
     }
 

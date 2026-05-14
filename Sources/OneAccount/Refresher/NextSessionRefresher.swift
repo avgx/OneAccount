@@ -2,18 +2,19 @@ import Foundation
 import HTTP
 import RequestResponse
 import JWTDecode
+import DebugThings
 
 public struct NextSessionRefresher: SessionRefresher {
     private let baseURL: URL
     private let credentials: Credentials?
-
-    public init(baseURL: URL, credentials: Credentials? = nil) {
+    private let logger: (any URLSessionTaskLogger)?
+    public init(baseURL: URL, credentials: Credentials? = nil, logger: (any URLSessionTaskLogger)? = nil) {
         self.baseURL = baseURL
         self.credentials = credentials
+        self.logger = logger
     }
 
     public func refresh(_ current: BackendSession?) async throws -> BackendSession {
-        print(#function)
         guard case .next(let session)? = current else {
             throw URLError(.userAuthenticationRequired)
         }
@@ -34,12 +35,12 @@ public struct NextSessionRefresher: SessionRefresher {
     private func renew(bearerToken: String) async throws -> BackendSession {
         let (client, builder) = BearerRefreshTransport.jsonClientAndBuilder(
             baseURL: baseURL,
-            bearerToken: bearerToken
+            bearerToken: bearerToken,
+            logger: logger
         )
 
         let response = try await client.send(NextApi.renew(), with: builder).value
 
-        print(response)
         guard let access = response.token_value else {
             throw URLError(.userAuthenticationRequired)
         }
@@ -49,14 +50,13 @@ public struct NextSessionRefresher: SessionRefresher {
 
     private func authenticate(user: String, password: String) async throws -> BackendSession {
         let builder = RequestBuilder.json(baseURL: baseURL, encoder: JSONEncoder())
-        let client = HTTPClient()
+        let client = HTTPClient(logger: logger ?? NoopURLSessionTaskLogger())
 
         let response = try await client.send(
             NextApi.authenticate(user: user, password: password),
             with: builder
         ).value
 
-        print(response)
         guard response.error_code == .AUTHENTICATE_CODE_OK,
               let token = response.token_value else {
             throw URLError(.userAuthenticationRequired)

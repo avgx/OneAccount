@@ -132,11 +132,12 @@ enum NextAuthFailureMapping {
 
 public struct AuthService: Sendable {
     public let clientId: String
-    public var logger: (any URLSessionTaskLogger)? = nil
+    private let logger: (any URLSessionTaskLogger)?
     private var backendResolver: @Sendable (URL) async throws -> Backend
     
-    public init(clientId: String, backendResolver: @Sendable @escaping (URL) async throws -> Backend) {
+    public init(clientId: String, logger: (any URLSessionTaskLogger)? = nil, backendResolver: @Sendable @escaping (URL) async throws -> Backend) {
         self.clientId = clientId
+        self.logger = logger
         self.backendResolver = backendResolver
     }
     
@@ -159,7 +160,7 @@ public struct AuthService: Sendable {
     
     public func verifyOtp(url: URL, user: String, code: String, mode: OtpMode) async throws -> BackendSession {
         let builder = RequestBuilder.json(baseURL: url, encoder: JSONEncoder())
-        let client = HTTPClient(logger: logger)
+        let client = HTTPClient(logger: logger ?? NoopURLSessionTaskLogger())
         let request = mode == .totp
             ? CloudApi.totpVerify(.init(email: user, totp: code, clientId: clientId))
             : CloudApi.otpVerify(.init(email: user, otp: code, clientId: clientId))
@@ -179,7 +180,7 @@ public struct AuthService: Sendable {
 private extension AuthService {
     func signInCloud(baseURL: URL, user: String, password: String) async throws -> SignInOutcome {
         let builder = RequestBuilder.json(baseURL: baseURL, encoder: JSONEncoder())
-        let client = HTTPClient(logger: logger)
+        let client = HTTPClient(logger: logger ?? NoopURLSessionTaskLogger())
         do {
             let response = try await client.send(
                 CloudApi.login(.init(email: user, password: password, locale: Locale.current.identifier, clientId: clientId)),
@@ -209,7 +210,7 @@ private extension AuthService {
     
     func signInNext(baseURL: URL, user: String, password: String) async throws -> SignInOutcome {
         let builder = RequestBuilder.json(baseURL: baseURL, encoder: JSONEncoder())
-        let client = HTTPClient(logger: logger)
+        let client = HTTPClient(logger: logger ?? NoopURLSessionTaskLogger())
         let response = try await client.send(
             NextApi.authenticate(user: user, password: password),
             with: builder
@@ -229,7 +230,7 @@ private extension AuthService {
         
         let client = HTTPClient(
             interceptor: FixedAuthInterceptor(authorization: .basic(.init(user: user, password: password))),
-            logger: logger
+            logger: logger ?? NoopURLSessionTaskLogger()
         )
         
         let request = switch backend {

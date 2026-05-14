@@ -1,5 +1,6 @@
 import SwiftUI
 import OneAccount
+import DebugThings
 
 /// Re-authenticate a stored cloud or Next account and persist new bearer tokens.
 @MainActor
@@ -20,11 +21,16 @@ public struct ReloginSheet: View {
     @State private var errorMessage: String?
     @State private var working = false
 
-    public init(clientId: String, account: AccountRecord) {
+    public init(
+        clientId: String,
+        account: AccountRecord,
+        logger: (any URLSessionTaskLogger)? = nil
+    ) {
         self.clientId = clientId
         self.account = account
         self.authService = AuthService(
             clientId: clientId,
+            logger: logger,
             backendResolver: { _ in throw AuthServiceError.unsupportedBackend }
         )
     }
