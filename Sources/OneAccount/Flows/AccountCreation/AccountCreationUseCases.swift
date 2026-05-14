@@ -1,12 +1,19 @@
 import Foundation
 import SSLPinning
+import DebugThings
 
 public struct AccountCreationUseCases: Sendable {
     public var authService: AuthService
     public var serverTrustPolicy: ServerTrustPolicy
 
-    public init(authService: AuthService, serverTrustPolicy: ServerTrustPolicy = .system) {
-        self.authService = authService
+    public init(
+        authService: AuthService,
+        serverTrustPolicy: ServerTrustPolicy = .system,
+        logger: (any URLSessionTaskLogger)? = nil
+    ) {
+        var svc = authService
+        svc.logger = logger
+        self.authService = svc
         self.serverTrustPolicy = serverTrustPolicy
     }
 

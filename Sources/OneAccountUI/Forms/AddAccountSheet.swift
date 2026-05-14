@@ -1,6 +1,7 @@
 import SwiftUI
 import OneAccount
 import SSLPinning
+import DebugThings
 
 public struct AddAccountSheet<WizardContent: View>: View {
     @Environment(\.dismiss) private var dismiss
@@ -14,6 +15,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
         endpointWizardMode: EndpointWizardMode = .free,
         serverTrustPolicy: ServerTrustPolicy = .system,
         clientId: String,
+        logger: (any URLSessionTaskLogger)? = nil,
         onSave: @escaping (AccountCreationDraft) -> Void,
         @ViewBuilder content: @escaping (AccountCreationFlow) -> WizardContent
     ) {
@@ -27,7 +29,8 @@ public struct AddAccountSheet<WizardContent: View>: View {
                 mode: endpointWizardMode,
                 useCases: AccountCreationUseCases(
                     authService: auth,
-                    serverTrustPolicy: serverTrustPolicy
+                    serverTrustPolicy: serverTrustPolicy,
+                    logger: logger
                 )
             )
         )
@@ -37,6 +40,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
         endpointWizardMode: EndpointWizardMode = .free,
         serverTrustPolicy: ServerTrustPolicy = .system,
         clientId: String,
+        logger: (any URLSessionTaskLogger)? = nil,
         suggestions: WizardEndpointSuggestions = .defaultForSample,
         onSave: @escaping (AccountCreationDraft) -> Void
     ) where WizardContent == AccountCreationWizardLegacy {
@@ -44,6 +48,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
             endpointWizardMode: endpointWizardMode,
             serverTrustPolicy: serverTrustPolicy,
             clientId: clientId,
+            logger: logger,
             onSave: onSave
         ) { flow in
             AccountCreationWizardLegacy(flow: flow, suggestions: suggestions)
