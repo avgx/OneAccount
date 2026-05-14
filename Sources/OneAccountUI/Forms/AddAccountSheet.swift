@@ -3,20 +3,28 @@ import OneAccount
 import SSLPinning
 import DebugThings
 
+fileprivate func resolveEndpoint(_ input: String) async throws -> ResolvedEndpoint {
+    let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+    let result = try await WizardEndpointDiscovery.resolveEndpoint(trimmedURL: trimmed)
+    return ResolvedEndpoint(url: result.url, backend: result.backend)
+}
+
 public struct AddAccountSheet<WizardContent: View>: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var flow: AccountCreationFlow
     @State private var saveInFlight = false
 
     private let content: (AccountCreationFlow) -> WizardContent
-    public let onSave: (AccountCreationDraft) -> Void
+    public let onSave: (Draft) -> Void
 
+    
+    
     public init(
         endpointWizardMode: EndpointWizardMode = .free,
         serverTrustPolicy: ServerTrustPolicy = .system,
         clientId: String,
         logger: (any URLSessionTaskLogger)? = nil,
-        onSave: @escaping (AccountCreationDraft) -> Void,
+        onSave: @escaping (Draft) -> Void,
         @ViewBuilder content: @escaping (AccountCreationFlow) -> WizardContent
     ) {
         self.onSave = onSave
@@ -29,7 +37,8 @@ public struct AddAccountSheet<WizardContent: View>: View {
                 mode: endpointWizardMode,
                 useCases: AccountCreationUseCases(
                     authService: auth,
-                    serverTrustPolicy: serverTrustPolicy
+                    serverTrustPolicy: serverTrustPolicy,
+                    resolveEndpoint: resolveEndpoint
                 )
             )
         )
@@ -41,7 +50,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
         clientId: String,
         logger: (any URLSessionTaskLogger)? = nil,
         suggestions: WizardEndpointSuggestions = .defaultForSample,
-        onSave: @escaping (AccountCreationDraft) -> Void
+        onSave: @escaping (Draft) -> Void
     ) where WizardContent == AccountCreationWizardLegacy {
         self.init(
             endpointWizardMode: endpointWizardMode,

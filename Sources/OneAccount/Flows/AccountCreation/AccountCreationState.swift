@@ -71,15 +71,7 @@ public struct CertificatePreviewState: Equatable, Sendable {
     }
 }
 
-public struct ResolvedEndpoint: Equatable, Sendable {
-    public var url: URL
-    public var backend: Backend
 
-    public init(url: URL, backend: Backend) {
-        self.url = url
-        self.backend = backend
-    }
-}
 
 public struct EndpointInput: Equatable, Sendable {
     public var rawURL: String

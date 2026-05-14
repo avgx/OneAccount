@@ -2,26 +2,9 @@ import Combine
 import Foundation
 import SSLPinning
 
-public enum AccountCreationFlowError: LocalizedError, Equatable {
-    case missingResolvedEndpoint
-    case emptyCredentials
-    case emptyOtp
-
-    public var errorDescription: String? {
-        switch self {
-        case .missingResolvedEndpoint:
-            "Select a server before continuing."
-        case .emptyCredentials:
-            "Enter username and password."
-        case .emptyOtp:
-            "Enter the verification code."
-        }
-    }
-}
-
 @MainActor
 public final class AccountCreationFlow: ObservableObject {
-    @Published public var draft: AccountCreationDraft
+    @Published public var draft: Draft
     @Published public var step: AccountCreationStep
     @Published public var endpointState = EndpointInputState()
     @Published public var credentialsState = CredentialsState()
@@ -38,7 +21,7 @@ public final class AccountCreationFlow: ObservableObject {
         endpointWizardMode = mode
         self.useCases = useCases
 
-        var initialDraft = AccountCreationDraft()
+        var initialDraft = Draft()
         switch mode {
         case .free:
             step = .endpoint
@@ -94,7 +77,7 @@ public final class AccountCreationFlow: ObservableObject {
     }
 
     public func selectDiscoveryCandidate(_ candidate: DiscoveryCandidate) async {
-        draft.applyDiscoveryCandidate(candidate)
+        draft.applyDiscoveryCandidate(candidate.endpoint)
         endpointState.message = nil
         await transitionAfterEndpointReady()
     }
@@ -106,7 +89,7 @@ public final class AccountCreationFlow: ObservableObject {
         defer { endpointState.isResolving = false }
 
         do {
-            let resolved = try await useCases.resolveEndpoint(EndpointInput(rawURL: draft.url))
+            let resolved = try await useCases.resolveEndpoint(draft.url)
             draft.url = resolved.url.absoluteString
             draft.backend = resolved.backend
             await transitionAfterEndpointReady()
@@ -232,16 +215,16 @@ public final class AccountCreationFlow: ObservableObject {
     }
 
     private static func endpointMessage(for error: Error) -> String {
-        if let failure = error as? WizardEndpointDiscovery.DiscoveryFailure {
-            switch failure {
-            case .emptyInput, .noSeeds:
-                return URLError(.badURL).localizedDescription
-            case .unsupportedBackend:
-                return URLError(.cannotFindHost).localizedDescription
-            case .underlying(let err):
-                return err.localizedDescription
-            }
-        }
+//        if let failure = error as? WizardEndpointDiscovery.DiscoveryFailure {
+//            switch failure {
+//            case .emptyInput, .noSeeds:
+//                return URLError(.badURL).localizedDescription
+//            case .unsupportedBackend:
+//                return URLError(.cannotFindHost).localizedDescription
+//            case .underlying(let err):
+//                return err.localizedDescription
+//            }
+//        }
         return error.localizedDescription
     }
 }

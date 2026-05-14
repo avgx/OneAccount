@@ -70,7 +70,7 @@ let package = Package(
         .testTarget(
             name: "OneAccountTests",
             dependencies: [
-                "OneAccount",
+                "OneAccount", "OneAccountUI", "OneDiscovery",
                 .product(name: "JWTDecode", package: "JWTDecode.swift"),
                 .product(name: "RequestResponse", package: "RequestResponse"),
                 .product(name: "EncodeDecode", package: "EncodeDecode"),

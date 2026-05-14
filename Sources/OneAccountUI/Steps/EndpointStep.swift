@@ -4,7 +4,7 @@ import OneAccount
 @MainActor
 struct EndpointStep: View {
 
-    @Binding var draft: AccountCreationDraft
+    @Binding var draft: Draft
     @ObservedObject var suggestionLoader: SuggestionLoader
     @Binding var state: EndpointInputState
     var suggestions: WizardEndpointSuggestions

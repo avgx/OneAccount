@@ -5,19 +5,16 @@ import DebugThings
 public struct AccountCreationUseCases: Sendable {
     public var authService: AuthService
     public var serverTrustPolicy: ServerTrustPolicy
-
+    public var resolveEndpoint: @Sendable (String) async throws -> ResolvedEndpoint
+    
     public init(
         authService: AuthService,
-        serverTrustPolicy: ServerTrustPolicy = .system
+        serverTrustPolicy: ServerTrustPolicy = .system,
+        resolveEndpoint: @Sendable @escaping (String) async throws -> ResolvedEndpoint
     ) {
         self.authService = authService
         self.serverTrustPolicy = serverTrustPolicy
-    }
-
-    public func resolveEndpoint(_ input: EndpointInput) async throws -> ResolvedEndpoint {
-        let trimmed = input.rawURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        let result = try await WizardEndpointDiscovery.resolveEndpoint(trimmedURL: trimmed)
-        return ResolvedEndpoint(url: result.url, backend: result.backend)
+        self.resolveEndpoint = resolveEndpoint
     }
 
     public func loadCertificates(for endpoint: Endpoint) async -> CertificatePreviewState {

@@ -2,7 +2,7 @@ import Foundation
 
 /// Domain draft for account creation. Transient wizard state lives in
 /// ``AccountCreationFlow`` and related UI-state structs.
-public struct AccountCreationDraft: Equatable, Sendable {
+public struct Draft: Equatable, Sendable {
     public var url: String = ""
     public var backend: Backend?
     public var user: String = ""
@@ -18,8 +18,8 @@ public struct AccountCreationDraft: Equatable, Sendable {
         return Endpoint(url: parsed, backend: backend)
     }
 
-    public mutating func applyDiscoveryCandidate(_ candidate: DiscoveryCandidate) {
-        var components = URLComponents(url: candidate.endpoint.url, resolvingAgainstBaseURL: false)
+    public mutating func applyDiscoveryCandidate(_ endpoint: Endpoint) {
+        var components = URLComponents(url: endpoint.url, resolvingAgainstBaseURL: false)
         let userPart = components?.user
         let passwordPart = components?.password
         components?.user = nil
@@ -28,7 +28,7 @@ public struct AccountCreationDraft: Equatable, Sendable {
         guard let cleanURL = components?.url else { return }
 
         url = cleanURL.absoluteString
-        backend = candidate.endpoint.backend
+        backend = endpoint.backend
 
         if let userPart, let passwordPart {
             user = userPart

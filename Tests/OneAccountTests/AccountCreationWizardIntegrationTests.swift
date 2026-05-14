@@ -1,6 +1,7 @@
 import Foundation
 import Testing
 @testable import OneAccount
+@testable import OneAccountUI
 
 /// Holds flow state while ``signInAndAdvanceThroughOtpIfNeeded()`` runs (OTP retry loop).
 private enum CloudTotpWizardScratch {
@@ -55,6 +56,12 @@ private enum WizardIntegrationProfile {
     case cloudTotp
 }
 
+fileprivate func resolveEndpoint(_ input: String) async throws -> ResolvedEndpoint {
+    let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+    let result = try await WizardEndpointDiscovery.resolveEndpoint(trimmedURL: trimmed)
+    return ResolvedEndpoint(url: result.url, backend: result.backend)
+}
+
 @MainActor
 private func runAddAccountWizardHeadlessNetwork(
     profile: WizardIntegrationProfile,
@@ -70,7 +77,7 @@ private func runAddAccountWizardHeadlessNetwork(
     }
     let flow = AccountCreationFlow(
         mode: .free,
-        useCases: AccountCreationUseCases(authService: auth, serverTrustPolicy: .system)
+        useCases: AccountCreationUseCases(authService: auth, serverTrustPolicy: .system, resolveEndpoint: resolveEndpoint)
     )
 
     #expect(flow.step == .endpoint)

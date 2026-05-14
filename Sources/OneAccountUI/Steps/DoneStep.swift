@@ -4,7 +4,7 @@ import OneAccount
 @MainActor
 struct DoneStep: View {
 
-    @Binding var draft: AccountCreationDraft
+    @Binding var draft: Draft
 
     var body: some View {
         if let endpoint = draft.resolvedEndpoint, endpoint.backend != nil {

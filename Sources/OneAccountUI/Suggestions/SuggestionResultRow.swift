@@ -19,8 +19,8 @@ struct SuggestionResultRow: View {
                 switch row.phase {
                 case .loading:
                     DiscoveryRowLabel(
-                        title: DiscoveryCandidate.previewUnknownBackend.rowTitle,
-                        detail: DiscoveryCandidate.previewUnknownBackend.rowDetail,
+                        title: "SomeUnknownURL.com",
+                        detail: "Some details about the URL",
                         isError: false,
                         showsCloudIcon: false
                     )

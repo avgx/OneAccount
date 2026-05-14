@@ -4,7 +4,7 @@ import OneAccount
 @MainActor
 struct CredentialsStep: View {
 
-    @Binding var draft: AccountCreationDraft
+    @Binding var draft: Draft
     @Binding var state: CredentialsState
     var onSignIn: () async throws -> Void
 

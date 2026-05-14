@@ -8,7 +8,7 @@ struct DiscoveryRowLabel: View {
     let detail: String
     let isError: Bool
     var showsCloudIcon: Bool = false
-
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -27,14 +27,20 @@ struct DiscoveryRowLabel: View {
     }
 }
 
+fileprivate let previewCloud = DiscoveryCandidate(endpoint: Endpoint(url: URL(string: "https://example.com")!, backend: .cloud), summary: "some backend")
+
+fileprivate let previewUnknownBackend = DiscoveryCandidate(endpoint: Endpoint(url: URL(string: "https://example.com")!, backend: nil), summary: "some other backend")
+
 #Preview {
     VStack(alignment: .leading) {
+        
+        
         Group {
-            DiscoveryRowLabel(title: DiscoveryCandidate.previewCloud.rowTitle, detail: DiscoveryCandidate.previewCloud.rowDetail, isError: false, showsCloudIcon: true)
-            DiscoveryRowLabel(title: DiscoveryCandidate.previewUnknownBackend.rowTitle, detail: DiscoveryCandidate.previewUnknownBackend.rowDetail, isError: false)
+            DiscoveryRowLabel(title: previewCloud.rowTitle, detail: previewCloud.rowDetail, isError: false, showsCloudIcon: true)
+            DiscoveryRowLabel(title: previewUnknownBackend.rowTitle, detail: previewUnknownBackend.rowDetail, isError: false)
             DiscoveryRowLabel(title: "https://example.com", detail: "some error", isError: true)
         }
-
+        
         Group {
             DiscoveryRowLabel(title: "https://example.com", detail: "ok", isError: false)
         }
@@ -42,3 +48,4 @@ struct DiscoveryRowLabel: View {
         .shimmering()
     }
 }
+

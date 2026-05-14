@@ -1,5 +1,6 @@
 import Foundation
 import OneDiscovery
+import OneAccount
 
 /// Resolves a user-entered host/URL to a concrete base URL and ``Backend`` using the same discovery loop as the add-account wizard.
 public enum WizardEndpointDiscovery: Sendable {
@@ -11,7 +12,7 @@ public enum WizardEndpointDiscovery: Sendable {
     }
 
     /// Tries each seed from ``URL/endpointDiscoverySeeds(from:)`` until `Web.explore` returns a known ``Backend``.
-    public static func resolveEndpoint(trimmedURL: String) async throws -> (url: URL, backend: Backend) {
+    public static func resolveEndpoint(trimmedURL: String) async throws -> (url: URL, backend: OneAccount.Backend) {
         let trimmed = trimmedURL.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { throw DiscoveryFailure.emptyInput }
         let seeds = URL.endpointDiscoverySeeds(from: trimmed)
@@ -20,7 +21,7 @@ public enum WizardEndpointDiscovery: Sendable {
         for seed in seeds {
             do {
                 let result = try await Web.explore(url: seed)
-                if let backend = Backend(rawValue: result.backend.rawValue) {
+                if let backend = OneAccount.Backend(rawValue: result.backend.rawValue) {
                     return (result.baseURL, backend)
                 }
             } catch {
