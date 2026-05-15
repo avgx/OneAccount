@@ -2,35 +2,42 @@ import SwiftUI
 import OneAccount
 
 @MainActor
-public struct AccountsSelectorSheet: View {
+public struct AccountSelector: View {
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var searchText: String = ""
-    
+
     let accounts: [AccountRecord]
     @Binding var currentID: AccountID?
     let onAddAccount: (() -> Void)?
-    
+
     public init(accounts: [AccountRecord], currentID: Binding<AccountID?>, onAddAccount: (() -> Void)? = nil) {
         self.accounts = accounts
         self._currentID = currentID
         self.onAddAccount = onAddAccount
     }
-    
+
+    private var showsSearch: Bool {
+        accounts.count > 5
+    }
+
+    private var items: [AccountRecord] {
+        let sorted = accounts.sorted { $0.baseURL.absoluteString < $1.baseURL.absoluteString }
+        guard showsSearch else { return sorted }
+        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return sorted }
+        let text = searchText.lowercased()
+        return sorted.filter {
+            $0.baseURL.absoluteString.lowercased().contains(text)
+                || $0.user.lowercased().contains(text)
+                || ($0.name?.lowercased().contains(text) ?? false)
+        }
+    }
+
     @ViewBuilder
     public var content: some View {
         List {
             Section {
-                let items = accounts
-                    .sorted { $0.baseURL.absoluteString < $1.baseURL.absoluteString }
-                    .filter {
-                        let trimmed = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-                        guard !trimmed.isEmpty else { return true }
-                        let text = searchText.lowercased()
-                        return $0.baseURL.absoluteString.lowercased().contains(text)
-                            || $0.user.lowercased().contains(text)
-                            || ($0.name?.lowercased().contains(text) ?? false)
-                    }
                 ForEach(items, id: \.id) { account in
                     Button(action: {
                         var transation = Transaction()
@@ -49,13 +56,18 @@ public struct AccountsSelectorSheet: View {
             }
         }
     }
-    
+
     public var body: some View {
+        if showsSearch {
             content
                 .navigationTitle("accounts")
                 .searchable(text: $searchText)
+        } else {
+            content
+                .navigationTitle("accounts")
+        }
     }
-    
+
     private var addAccountButton: some View {
         Button {
             dismiss()
@@ -64,5 +76,4 @@ public struct AccountsSelectorSheet: View {
             Label("Add account", systemImage: "person.badge.plus")
         }
     }
-    
 }
