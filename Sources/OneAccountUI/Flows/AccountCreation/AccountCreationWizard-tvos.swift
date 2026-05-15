@@ -4,7 +4,7 @@ import OneAccount
 
 @available(tvOS 18.0, *)
 @MainActor
-public struct AccountCreationWizardTVOS18: View {
+public struct AccountCreationWizard: View {
     @ObservedObject private var flow: AccountCreationFlow
     private let suggestions: WizardEndpointSuggestions
     @StateObject private var suggestionLoader = SuggestionLoader()
@@ -18,14 +18,13 @@ public struct AccountCreationWizardTVOS18: View {
     }
 
     public var body: some View {
-        List {
+        Form {
             AccountCreationStepContent(
                 flow: flow,
                 suggestionLoader: suggestionLoader,
                 suggestions: suggestions
             )
         }
-        .listStyle(.plain)
     }
 }
 #endif

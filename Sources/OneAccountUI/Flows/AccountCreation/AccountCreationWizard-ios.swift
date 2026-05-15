@@ -1,8 +1,9 @@
+#if !os(tvOS)
 import SwiftUI
 import OneAccount
 
 @MainActor
-public struct AccountCreationWizardLegacy: View {
+public struct AccountCreationWizard: View {
     @ObservedObject private var flow: AccountCreationFlow
     private let suggestions: WizardEndpointSuggestions
     @StateObject private var suggestionLoader = SuggestionLoader()
@@ -25,3 +26,4 @@ public struct AccountCreationWizardLegacy: View {
         }
     }
 }
+#endif

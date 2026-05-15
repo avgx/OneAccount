@@ -51,7 +51,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
         logger: (any URLSessionTaskLogger)? = nil,
         suggestions: WizardEndpointSuggestions = .defaultForSample,
         onSave: @escaping (Draft) -> Void
-    ) where WizardContent == AccountCreationWizardLegacy {
+    ) where WizardContent == AccountCreationWizard {
         self.init(
             endpointWizardMode: endpointWizardMode,
             serverTrustPolicy: serverTrustPolicy,
@@ -59,7 +59,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
             logger: logger,
             onSave: onSave
         ) { flow in
-            AccountCreationWizardLegacy(flow: flow, suggestions: suggestions)
+            AccountCreationWizard(flow: flow, suggestions: suggestions)
         }
     }
 

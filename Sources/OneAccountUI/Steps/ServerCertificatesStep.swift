@@ -34,6 +34,8 @@ struct ServerCertificatesStep: View {
                             .foregroundStyle(.secondary)
 #if !os(tvOS)
                             .textSelection(.enabled)
+#else
+                            .lineLimit(3)
 #endif
                     }
                     .padding(.vertical, 4)
