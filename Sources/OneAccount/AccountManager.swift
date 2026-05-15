@@ -6,7 +6,7 @@ import Foundation
 /// Does **not** own selection — `CurrentAccount` is the single source of truth
 /// for which account is active.
 @MainActor
-public final class AccountsViewModel: ObservableObject {
+public final class AccountManager: ObservableObject {
 
     public let store: AccountStore
 

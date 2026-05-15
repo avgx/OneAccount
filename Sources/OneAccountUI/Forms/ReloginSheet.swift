@@ -6,7 +6,7 @@ import DebugThings
 @MainActor
 public struct ReloginSheet: View {
     @Environment(\.dismiss) private var dismiss
-    @EnvironmentObject private var accountsViewModel: AccountsViewModel
+    @EnvironmentObject private var accountManager: AccountManager
     @EnvironmentObject private var currentAccount: CurrentAccount
 
     private let clientId: String
@@ -190,10 +190,10 @@ public struct ReloginSheet: View {
     }
 
     private func persistSession(_ session: BackendSession?) async throws {
-        try await accountsViewModel.store.updateSession(accountID: account.id, session: session)
+        try await accountManager.store.updateSession(accountID: account.id, session: session)
         if currentAccount.selectedId == account.id {
             await currentAccount.selectAccount(id: account.id)
         }
-        try await accountsViewModel.refresh()
+        try await accountManager.refresh()
     }
 }

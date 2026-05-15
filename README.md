@@ -25,7 +25,7 @@ Minimum OS versions: iOS 15, tvOS 15, macOS 13, watchOS 9, visionOS 1; Swift too
 6. **Account creation** — **`AccountCreationFlow`** + **`AccountCreationUseCases`**: resolve URL with **`WizardEndpointDiscovery`** (OneDiscovery), TLS chain preview with **`HTTPSCertificateProbe`**, draft **`AccountCreationDraft`** → **`AccountRecord.init?(draft:)`**.
 
 
-For SwiftUI account lists, wire **`AccountsViewModel`** as an `environmentObject` — it only loads/refreshes the list from `AccountStore` and does **not** own selection (selection is only on `CurrentAccount`).
+For SwiftUI account lists, wire **`AccountManager`** as an `environmentObject` — it only loads/refreshes the list from `AccountStore` and does **not** own selection (selection is only on `CurrentAccount`).
 
 ## Architecture (UI)
 
@@ -127,7 +127,7 @@ Below is the surface meant for use outside the module. Additional DTOs (Cloud/Ne
 
 ### SwiftUI (OneAccountUI)
 
-- **`AccountsViewModel`** — `init(store:)`, `refresh()`, `delete(_:)`.
+- **`AccountManager`** — `init(store:)`, `refresh()`, `delete(_:)`.
 - **`AccountsListView`**, **`AccountsSelectorSheet`**, **`AddAccountSheet`**, **`ReloginSheet`**, **`RenameAccountSheet`** (see initializers in source).
 - **`AccountCreationWizardLegacy`**, **`AccountCreationWizardIOS18`**, **`AccountCreationWizardTVOS18`**, **`AccountCreationStepContent`**.
 - Fields: **`URLField`**, **`UsernameField`**, **`PasswordField`**, **`CredentialsField`**, **`OTPField`** / typealias **`OtpField`**.
@@ -159,15 +159,15 @@ Target:
 let store = AccountStorage.keychain(keyPrefix: "MyApp", service: "MyApp.accounts").makeStore()
 try await store.load()
 
-let accountsVM = AccountsViewModel(store: store)
+let accountManager = AccountManager(store: store)
 let currentAccount = CurrentAccount(store: store)
 
 // SwiftUI
-.environmentObject(accountsVM)
+.environmentObject(accountManager)
 .environmentObject(currentAccount)
 
 Task {
-    try await accountsVM.refresh()
+    try await accountManager.refresh()
     await currentAccount.selectAccount(id: someId)
 }
 ```
@@ -186,7 +186,7 @@ NavigationStack {
         guard let record = AccountRecord(draft: draft) else { return }
         Task {
             try await store.save(record)
-            try await accountsVM.refresh()
+            try await accountManager.refresh()
         }
     }
 }

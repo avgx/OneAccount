@@ -3,7 +3,7 @@ import OneAccount
 
 /// Account list with edit mode and selection. Implemented for iOS and tvOS only.
 public struct AccountsListView: View {
-    @ObservedObject private var accountsViewModel: AccountsViewModel
+    @ObservedObject private var accountManager: AccountManager
     @Binding private var selectedAccountID: AccountID?
 
     @Environment(\.editMode) private var editMode
@@ -17,16 +17,16 @@ public struct AccountsListView: View {
 //    #endif
 
     public init(
-        accountsViewModel: AccountsViewModel,
+        accountManager: AccountManager,
         selectedAccountID: Binding<AccountID?>,
     ) {
-        self._accountsViewModel = ObservedObject(wrappedValue: accountsViewModel)
+        self._accountManager = ObservedObject(wrappedValue: accountManager)
         self._selectedAccountID = selectedAccountID
     }
 
     public var body: some View {
         List {
-            ForEach(accountsViewModel.accounts) { account in
+            ForEach(accountManager.accounts) { account in
                 Button {
                     selectedAccountID = account.id
                 } label: {
@@ -45,14 +45,14 @@ public struct AccountsListView: View {
 
     private func deleteAccountsAtOffsets(_ offsets: IndexSet) {
         print("deleteAccountsAtOffsets \(offsets)")
-        let ids = offsets.map { accountsViewModel.accounts[$0].id }
+        let ids = offsets.map { accountManager.accounts[$0].id }
         Task { @MainActor in
             if let selected = selectedAccountID, ids.contains(selected) {
                 selectedAccountID = nil
             }
             for id in ids {
                 do {
-                    try await accountsViewModel.delete(id)
+                    try await accountManager.delete(id)
                 } catch {
                     //TODO: show warning
                     return
