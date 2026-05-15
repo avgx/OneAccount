@@ -1,7 +1,7 @@
 import SwiftUI
 import OneAccount
 
-struct RenameAccountSheet: View {
+struct AccountEdit: View {
     @Environment(\.dismiss) private var dismiss
     let account: AccountRecord
     let onSave: (String) -> Void
@@ -64,7 +64,7 @@ struct RenameAccountSheet: View {
 
 #Preview {
     NavigationView {
-        RenameAccountSheet(
+        AccountEdit(
             account: .init(
                 baseURL: URL(string:"https://example.com/")!,
                 user: "root",
