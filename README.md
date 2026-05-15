@@ -128,7 +128,7 @@ Below is the surface meant for use outside the module. Additional DTOs (Cloud/Ne
 ### SwiftUI (OneAccountUI)
 
 - **`AccountManager`** — `init(store:)`, `refresh()`, `delete(_:)`.
-- **`AccountsListView`**, **`AccountsSelectorSheet`**, **`AddAccountSheet`**, **`ReloginSheet`**, **`RenameAccountSheet`** (see initializers in source).
+- **`AccountList`**, **`AccountsSelectorSheet`**, **`AddAccountSheet`**, **`ReloginSheet`**, **`RenameAccountSheet`** (see initializers in source).
 - **`AccountCreationWizardLegacy`**, **`AccountCreationWizardIOS18`**, **`AccountCreationWizardTVOS18`**, **`AccountCreationStepContent`**.
 - Fields: **`URLField`**, **`UsernameField`**, **`PasswordField`**, **`CredentialsField`**, **`OTPField`** / typealias **`OtpField`**.
 - Misc: **`AvatarView`**, **`AccountDetailedLabel`**, **`ActionButton`**, style view modifiers (`urlFieldStyle`, credentials field style).
