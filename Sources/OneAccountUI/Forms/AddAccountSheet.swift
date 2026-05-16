@@ -157,7 +157,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
                 print("add ios18 \(draft.url)")
             }
         ) { flow in
-            AccountCreationWizardIOS18(flow: flow)
+            AccountCreationWizard(flow: flow)
         }
     }
 }
