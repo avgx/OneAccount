@@ -23,6 +23,9 @@ enum NextApi {
     }
     /// require valid Bearer or Basic auth
     static func test() -> Request<Void> {
-        Request(path: "product/version", method: .get)
+        let q = [
+            ("_", "\(Int(Date().timeIntervalSince1970 * 1000))"),
+        ]
+        return Request(path: "product/version", method: .get, query: q)
     }
 }

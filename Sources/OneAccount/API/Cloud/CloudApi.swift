@@ -25,6 +25,9 @@ enum CloudApi {
 
     static func test() -> Request<Void> {
         //??? api/v3/ac-backend/users/23544
-        Request(path: "api/v3/ac-backend/domains/groups", method: .get)
+        let q = [
+            ("_", "\(Int(Date().timeIntervalSince1970 * 1000))"),
+        ]
+        return Request(path: "api/v3/ac-backend/domains/groups", method: .get, query: q)
     }
 }
