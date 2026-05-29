@@ -37,7 +37,6 @@ public final class CurrentAccount: ObservableObject {
 
     let store: AccountStore
     private var factory: any AccountRuntimeBuilding
-    private let accountChangedHub = Hub<Changed>()
 
     // MARK: - Init
 
@@ -49,13 +48,9 @@ public final class CurrentAccount: ObservableObject {
     // MARK: - Selection
 
     /// Select an account by ID. Tears down the current runtime, builds a new one,
-    /// then publishes `accountChanged` with `.willChange` / `.didChange`.
     /// Pass `nil` to deselect.
     public func selectAccount(id: AccountID?) async {
-        let oldId = selectedId
         reloginPromptAccountID = nil
-
-        await accountChangedHub.publish(Changed(phase: .willChange, oldId: oldId, newId: id))
 
         await runtime?.shutdown()
         runtime = nil
@@ -70,22 +65,12 @@ public final class CurrentAccount: ObservableObject {
             runtime = built
             selectedId = built != nil ? id : nil
         }
-
-        await accountChangedHub.publish(Changed(phase: .didChange, oldId: oldId, newId: selectedId))
     }
 
     // MARK: - Relogin
 
     public func clearReloginPrompt() {
         reloginPromptAccountID = nil
-    }
-
-    // MARK: - Change notifications
-
-    /// Subscribe to account selection lifecycle events (willChange / didChange).
-    /// Useful for tearing down long-lived resources (WebSocket, cache) on the host side.
-    public func accountChanged() async -> AsyncStream<Changed> {
-        await accountChangedHub.subscribe()
     }
 
     // MARK: - Statistics passthrough
@@ -123,22 +108,5 @@ public final class CurrentAccount: ObservableObject {
         df.serverTrustPolicy = serverTrustPolicy
         df.logger = logger
         return df
-    }
-}
-
-// MARK: - Changed
-
-extension CurrentAccount {
-    public struct Changed: Sendable {
-        public enum Phase: Sendable { case willChange, didChange }
-        public let phase: Phase
-        public let oldId: AccountID?
-        public let newId: AccountID?
-
-        public init(phase: Phase, oldId: AccountID?, newId: AccountID?) {
-            self.phase = phase
-            self.oldId = oldId
-            self.newId = newId
-        }
     }
 }

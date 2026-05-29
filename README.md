@@ -59,7 +59,6 @@ Below is the surface meant for use outside the module. Additional DTOs (Cloud/Ne
 - `init(store:factory:)` — `nil` factory uses `DefaultAccountRuntimeFactory`.
 - `selectAccount(id:)` — `nil` clears selection; creates/tears down `AccountRuntime`.
 - `clearReloginPrompt()`
-- `accountChanged() async -> AsyncStream<Changed>` — `.willChange` / `.didChange` for app-side WebSocket/cache teardown.
 - `statistics() async` — snapshot from the current runtime.
 - Published: `runtime`, `selectedId`, `reloginPromptAccountID`; config: `serverTrustPolicy`, `logger`.
 
@@ -217,14 +216,5 @@ case .needsOtp(let modes):
     // Present OTP UI; `modes` lists allowed second factors.
     let session = try await auth.verifyOtp(url: baseURL, user: "u", code: code, mode: .otp)
     _ = (modes, session)
-}
-```
-
-### 4. Account changes and long-lived resources
-
-```swift
-let stream = await currentAccount.accountChanged()
-for await change in stream where change.phase == .didChange {
-    // reconnect WebSocket, clear caches, etc.
 }
 ```
