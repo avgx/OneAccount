@@ -96,14 +96,21 @@ public struct AddAccountSheet<WizardContent: View>: View {
 
     private var wizardToolbarTitle: some View {
         VStack(spacing: 4) {
-            Text("Add Account")
-                .font(.headline)
-                .lineLimit(1)
-            WizardStepHeader(
-                current: flow.wizardCurrentStepIndex,
-                total: flow.wizardTotalSteps,
-                compact: true
-            )
+            HStack(spacing: 4) {
+                Text("Add Account")
+                    .font(.headline)
+                    .lineLimit(1)
+                WizardStepHeader(
+                    current: flow.wizardCurrentStepIndex,
+                    total: flow.wizardTotalSteps,
+                    compact: true
+                )
+            }
+            if flow.step != .endpoint, let endpoint = flow.draft.resolvedEndpoint {
+                Text(endpoint.url.pretty())
+            } else {
+                Text("URL of server or cloud")
+            }
         }
         .accessibilityElement(children: .combine)
     }

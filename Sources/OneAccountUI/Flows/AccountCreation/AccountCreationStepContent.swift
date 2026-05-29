@@ -61,16 +61,18 @@ struct AccountCreationStepContent: View {
 
     @ViewBuilder
     private var endpointSummaryIfNeeded: some View {
-        if flow.step != .endpoint, let endpoint = flow.draft.resolvedEndpoint {
-            Section {
-                AccountCreationSummaryRow(title: "URL", value: endpoint.url.absoluteString)
-                if let backend = endpoint.backend {
-                    AccountCreationSummaryRow(title: "Backend", value: backend.rawValue)
-                }
-            } header: {
-                Text("Selected server")
-            }
-        }
+//        if flow.step != .endpoint, let endpoint = flow.draft.resolvedEndpoint {
+//            Section {
+//                AccountCreationSummaryRow(title: "URL", value: endpoint.url.pretty())
+////                if let backend = endpoint.backend {
+////                    AccountCreationSummaryRow(title: "Backend", value: backend.rawValue)
+////                }
+//            } header: {
+//                Text("Selected server")
+//            }
+//            .listRowBackground(Color.clear)
+//        }
+        EmptyView()
     }
 }
 
