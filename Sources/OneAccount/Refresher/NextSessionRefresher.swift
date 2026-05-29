@@ -20,8 +20,17 @@ public struct NextSessionRefresher: SessionRefresher {
         }
 
         let decoded = try decode(jwt: session.authToken)
-        if decoded.expiresAt! > Date() {
-            return try await renew(bearerToken: session.authToken)
+        let expiresAt = decoded.expiresAt
+        // renew2 accepts only a still-valid bearer; expired tokens must re-authenticate.
+        let canRenew = expiresAt.map { $0 > Date() } ?? false
+
+        if canRenew {
+            do {
+                return try await renew(bearerToken: session.authToken)
+            } catch {
+                guard let creds = credentials else { throw error }
+                return try await authenticate(user: creds.user, password: creds.password)
+            }
         }
 
         guard let creds = credentials else {

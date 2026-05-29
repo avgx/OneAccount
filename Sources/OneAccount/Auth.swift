@@ -1,5 +1,4 @@
 import Foundation
-import JWTDecode
 
 public actor Auth {
     
@@ -27,7 +26,8 @@ public actor Auth {
         
     public func validAccessToken(refreshIfNeeded: Bool = true) async throws -> String {
         if let token = storage?.accessToken {
-            if refreshIfNeeded, shouldProactivelyRefresh() {
+            let needsRefresh = refreshIfNeeded && (shouldProactivelyRefresh() || isAccessTokenExpired())
+            if needsRefresh {
                 return try await refresh()
             }
             return token
@@ -42,7 +42,6 @@ public actor Auth {
         guard refresher != nil else {
             throw URLError(.userAuthenticationRequired)
         }
-        
         let output = try await performRefresh()
         return output.accessToken
     }
@@ -59,6 +58,11 @@ public actor Auth {
         guard let margin = policy.refreshMargin, margin > 0,
               let storage = storage else { return false }
         return storage.shouldRefresh(margin: margin)
+    }
+
+    private func isAccessTokenExpired() -> Bool {
+        guard let exp = storage?.accessExpiresAt else { return true }
+        return exp <= Date()
     }
     
     private func performRefresh() async throws -> BackendSession {
