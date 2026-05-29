@@ -29,7 +29,8 @@ struct EndpointStep: View {
                     suggestionLoader.scheduleReload(rawURL: newValue)
                 }
         } header: {
-            Text("URL of server or cloud")
+//            Text("URL of server or cloud")
+            EmptyView()
         } footer: {
             if let message = state.message {
                 Text(message)

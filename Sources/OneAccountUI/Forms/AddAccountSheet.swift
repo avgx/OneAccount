@@ -107,7 +107,10 @@ public struct AddAccountSheet<WizardContent: View>: View {
                 )
             }
             if flow.step != .endpoint, let endpoint = flow.draft.resolvedEndpoint {
-                Text(endpoint.url.pretty())
+                HStack(spacing: 4) {
+                    Image(systemName: endpoint.backend == .cloud ? "icloud" : "desktopcomputer")
+                    Text(endpoint.url.pretty())
+                }
             } else {
                 Text("URL of server or cloud")
             }
