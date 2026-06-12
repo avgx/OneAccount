@@ -6,10 +6,16 @@ public struct AccountList: View {
     @ObservedObject private var accountManager: AccountManager
     @Binding private var selectedAccountID: AccountID?
 
+    #if !os(macOS)
     @Environment(\.editMode) private var editMode
+    #endif
     
     var isEditing: Bool {
+        #if os(macOS)
+        false
+        #else
         editMode?.wrappedValue.isEditing ?? false
+        #endif
     }
     
 //    #if os(iOS) || os(tvOS)

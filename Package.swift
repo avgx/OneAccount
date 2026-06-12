@@ -25,23 +25,23 @@ let package = Package(
         ),
     ],
     dependencies: [
+        .package(url: "https://github.com/avgx/OneDiscovery", from: "1.0.0"),
         .package(url: "https://github.com/auth0/JWTDecode.swift", from: "4.0.0"),
         .package(url: "https://github.com/avgx/SSLPinning", from: "1.0.2"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.10.1"),
         .package(url: "https://github.com/avgx/RequestResponse.git", from: "2.0.0"),
         .package(url: "https://github.com/avgx/EncodeDecode.git", from: "1.0.2"),
         .package(url: "https://github.com/avgx/URLKit.git", from: "1.0.0"),
-        .package(url: "https://github.com/avgx/DebugThings.git", branch: "main"),
-        .package(url: "https://github.com/avgx/Get.git", branch: "dev"),
-        .package(url: "https://github.com/avgx/ButtonKit", branch: "main"),
-        .package(url: "https://github.com/avgx/SwiftUI-Shimmer", branch: "main"),
-        .package(url: "https://github.com/avgx/OneDiscovery", branch: "main"),
+        .package(url: "https://github.com/avgx/DebugThings.git", from: "2.0.0"),
+        .package(url: "https://github.com/avgx/Get.git", from: "6.0.0"),
+        .package(url: "https://github.com/Dean151/ButtonKit.git", from: "0.7.1"),
+        .package(url: "https://github.com/markiv/SwiftUI-Shimmer", from: "1.5.1"),
     ],
     targets: [
         .target(
             name: "OneAccount",
             dependencies: [
-                "OneDiscovery",
+                .product(name: "OneDiscovery", package: "OneDiscovery"),
                 .product(name: "JWTDecode", package: "JWTDecode.swift"),
                 .product(name: "RequestResponse", package: "RequestResponse"),
                 .product(name: "EncodeDecode", package: "EncodeDecode"),
@@ -55,7 +55,7 @@ let package = Package(
             name: "OneAccountUI",
             dependencies: [
                 "OneAccount",
-                "OneDiscovery",
+                .product(name: "OneDiscovery", package: "OneDiscovery"),
                 .product(name: "JWTDecode", package: "JWTDecode.swift"),
                 .product(name: "RequestResponse", package: "RequestResponse"),
                 .product(name: "EncodeDecode", package: "EncodeDecode"),
@@ -70,7 +70,9 @@ let package = Package(
         .testTarget(
             name: "OneAccountTests",
             dependencies: [
-                "OneAccount", "OneAccountUI", "OneDiscovery",
+                "OneAccount",
+                "OneAccountUI",
+                .product(name: "OneDiscovery", package: "OneDiscovery"),
                 .product(name: "JWTDecode", package: "JWTDecode.swift"),
                 .product(name: "RequestResponse", package: "RequestResponse"),
                 .product(name: "EncodeDecode", package: "EncodeDecode"),
