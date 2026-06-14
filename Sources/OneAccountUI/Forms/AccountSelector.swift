@@ -48,7 +48,13 @@ public struct AccountSelector: View {
                         }
                     }) {
                         let isCurrent = account.id == currentID
-                        AccountDetailedLabel(account: account, checkmark: isCurrent)
+                        AccountLabel(account)
+                            .overlay(alignment: .trailing) {
+                                if isCurrent {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundStyle(.green)
+                                }
+                            }
                     }
                 }
                 .buttonStyle(.plain)
@@ -68,12 +74,17 @@ public struct AccountSelector: View {
         }
     }
 
+    @ViewBuilder
     private var addAccountButton: some View {
-        Button {
-            dismiss()
-            onAddAccount?()
-        } label: {
-            Label("Add account", systemImage: "person.badge.plus")
+        if let onAddAccount {
+            Button {
+                dismiss()
+                onAddAccount()
+            } label: {
+                Label("Add account", systemImage: "person.badge.plus")
+            }
+        } else {
+            EmptyView()
         }
     }
 }

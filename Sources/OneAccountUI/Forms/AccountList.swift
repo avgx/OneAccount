@@ -36,10 +36,13 @@ public struct AccountList: View {
                 Button {
                     selectedAccountID = account.id
                 } label: {
-                    AccountDetailedLabel(
-                        account: account,
-                        checkmark: account.id == selectedAccountID
-                    )
+                    AccountLabel(account)
+                    .overlay(alignment: .trailing) {
+                        if account.id == selectedAccountID {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(.green)
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
                 .allowsHitTesting(!isEditing)
