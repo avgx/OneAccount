@@ -14,7 +14,7 @@ struct EndpointStep: View {
 
     var body: some View {
         Section {
-            TextField("url", text: $draft.url)
+            TextField("URL of server or cloud", text: $draft.url)
                 .urlField()
                 .layoutPriority(1000)
                 #if os(iOS) || os(tvOS) || os(visionOS)
@@ -39,7 +39,11 @@ struct EndpointStep: View {
             }
         }
 
-        ActionButton(title: state.isResolving ? "connecting" : "connect", isLoading: state.isResolving) {
+        ActionButton(
+            title: state.isResolving ? "connecting" : "connect",
+            isLoading: state.isResolving,
+            isDisabled: state.isResolving || draft.url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        ) {
                 hideKeyboard()
                 try await onConnect()
         }

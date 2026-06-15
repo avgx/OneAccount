@@ -73,11 +73,6 @@ public struct AddAccountSheet<WizardContent: View>: View {
                 ToolbarItem(placement: .principal) {
                     wizardToolbarTitle
                 }
-//                ToolbarItem(placement: .cancellationAction) {
-//                    Button(action: { dismiss() }) {
-//                        Image(systemName: "xmark")
-//                    }
-//                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(action: confirmSave) {
                         Group {
@@ -96,24 +91,21 @@ public struct AddAccountSheet<WizardContent: View>: View {
 
     private var wizardToolbarTitle: some View {
         VStack(spacing: 4) {
-            HStack(spacing: 4) {
-                Text("Add Account")
-                    .font(.headline)
-                    .lineLimit(1)
-                WizardStepHeader(
-                    current: flow.wizardCurrentStepIndex,
-                    total: flow.wizardTotalSteps,
-                    compact: true
-                )
-            }
             if flow.step != .endpoint, let endpoint = flow.draft.resolvedEndpoint {
                 HStack(spacing: 4) {
-                    Image(systemName: endpoint.backend == .cloud ? "icloud" : "desktopcomputer")
+                    Image(systemName: endpoint.backend?.icon ?? "pc")
                     Text(endpoint.url.pretty())
                 }
             } else {
-                Text("URL of server or cloud")
+                Text("Add Account")
+                    .font(.headline)
+                    .lineLimit(1)                
             }
+                
+            WizardStepHeader(
+                current: flow.wizardCurrentStepIndex,
+                total: flow.wizardTotalSteps
+            )
         }
         .accessibilityElement(children: .combine)
     }

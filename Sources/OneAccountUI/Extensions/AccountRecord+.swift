@@ -3,7 +3,7 @@ import URLKit
 import OneAccount
 
 extension AccountRecord {
-    public var icon: String { self.backend == .cloud ? "icloud" : "pc" }
+    public var icon: String { self.backend?.icon ?? "pc" }
 }
 
 extension AccountRecord {

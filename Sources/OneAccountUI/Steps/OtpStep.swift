@@ -21,7 +21,11 @@ struct OtpStep: View {
             }
         }
 
-        ActionButton(title: "Continue", isLoading: state.isVerifying) {
+        ActionButton(
+            title: "Continue",
+            isLoading: state.isVerifying,
+            isDisabled: state.code.count < 4 || state.isVerifying
+        ) {
             try await onVerify()
         }
         .disabled(state.code.count < 4 || state.isVerifying)
