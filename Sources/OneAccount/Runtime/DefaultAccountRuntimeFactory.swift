@@ -7,18 +7,15 @@ import SSLPinning
 /// according to the account's backend. Inject via `CurrentAccount.init`.
 public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked Sendable {
 
-    public var serverTrustPolicy: ServerTrustPolicy
     public var logger: (any URLSessionTaskLogger)?
 
     private let store: AccountStore
 
     public init(
         store: AccountStore,
-        serverTrustPolicy: ServerTrustPolicy = .system,
         logger: (any URLSessionTaskLogger)? = nil
     ) {
         self.store = store
-        self.serverTrustPolicy = serverTrustPolicy
         self.logger = logger
     }
 
@@ -98,7 +95,7 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
             return HTTPClient(
                 configuration: .custom,
                 redirectDisposition: .doNotFollow,
-                serverTrustPolicy: serverTrustPolicy,
+                serverTrustPolicy: account.serverTrustPolicy,
                 interceptor: interceptor,
                 observer: statistics,
                 logger: logger ?? NoopURLSessionTaskLogger()
@@ -108,7 +105,7 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
             return HTTPClient(
                 configuration: .custom,
                 redirectDisposition: .doNotFollow,
-                serverTrustPolicy: serverTrustPolicy,
+                serverTrustPolicy: account.serverTrustPolicy,
                 interceptor: FixedAuthInterceptor(
                     authorization: .basic(
                         .init(user: account.credentials.user, password: account.credentials.password)

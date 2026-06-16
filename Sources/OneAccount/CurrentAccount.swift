@@ -9,12 +9,6 @@ public final class CurrentAccount: ObservableObject {
 
     // MARK: - Public config
 
-    /// Trust policy applied to every new runtime built by the factory.
-    /// Changing this triggers an async runtime rebuild while preserving the session.
-    public var serverTrustPolicy: ServerTrustPolicy = .system {
-        didSet { Task { await rebuildRuntime() } }
-    }
-
     /// Logger applied to the HTTP client inside each new runtime.
     /// Changing this triggers an async runtime rebuild while preserving the session.
     public var logger: (any URLSessionTaskLogger)? = nil {
@@ -105,7 +99,6 @@ public final class CurrentAccount: ObservableObject {
         guard var df = factory as? DefaultAccountRuntimeFactory else {
             return factory
         }
-        df.serverTrustPolicy = serverTrustPolicy
         df.logger = logger
         return df
     }

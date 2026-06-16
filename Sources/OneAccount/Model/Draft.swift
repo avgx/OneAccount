@@ -1,4 +1,5 @@
 import Foundation
+import SSLPinning
 
 /// Domain draft for account creation. Transient wizard state lives in
 /// ``AccountCreationFlow`` and related UI-state structs.
@@ -10,6 +11,8 @@ public struct Draft: Equatable, Sendable {
     public var displayName: String = ""
     public var session: BackendSession?
 
+    public var serverTrustPolicy: ServerTrustPolicy = .system
+    
     public init() {}
 
     public var resolvedEndpoint: Endpoint? {

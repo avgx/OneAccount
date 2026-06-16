@@ -105,7 +105,7 @@ public final class AccountCreationFlow: ObservableObject {
             return
         }
         certificatePreviewState = CertificatePreviewState(isLoading: true)
-        certificatePreviewState = await useCases.loadCertificates(for: endpoint)
+        certificatePreviewState = await useCases.loadCertificates(for: endpoint, serverTrustPolicy: draft.serverTrustPolicy)
     }
 
     public func continueAfterCertificates() {

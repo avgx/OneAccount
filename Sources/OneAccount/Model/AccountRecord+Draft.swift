@@ -15,7 +15,8 @@ extension AccountRecord {
             password: draft.password,
             name: name,
             backend: backend,
-            session: draft.session
+            session: draft.session,
+            serverTrustPolicy: draft.serverTrustPolicy
         )
     }
 }

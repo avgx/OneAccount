@@ -1,4 +1,5 @@
 import Foundation
+import SSLPinning
 
 public struct AccountRecord: Codable, Identifiable, Sendable, Equatable, CustomStringConvertible {
     public let id: AccountID
@@ -7,18 +8,22 @@ public struct AccountRecord: Codable, Identifiable, Sendable, Equatable, CustomS
     public var credentials: Credentials
     public var auth: AuthMethod?
 
+    public var serverTrustPolicy: ServerTrustPolicy = .system
+    
     public init(
         id: AccountID = UUID(),
         profile: Profile,
         endpoint: Endpoint,
         credentials: Credentials,
-        auth: AuthMethod?
+        auth: AuthMethod?,
+        serverTrustPolicy: ServerTrustPolicy = .system
     ) {
         self.id = id
         self.profile = profile
         self.endpoint = endpoint
         self.credentials = credentials
         self.auth = auth
+        self.serverTrustPolicy = serverTrustPolicy
     }
 
     /// Convenience initializer matching the previous flat layout.
@@ -29,7 +34,8 @@ public struct AccountRecord: Codable, Identifiable, Sendable, Equatable, CustomS
         password: String,
         name: String? = nil,
         backend: Backend? = nil,
-        session: BackendSession? = nil
+        session: BackendSession? = nil,
+        serverTrustPolicy: ServerTrustPolicy = .system
     ) {
         self.id = id
         self.profile = Profile(name: name)
@@ -42,6 +48,7 @@ public struct AccountRecord: Codable, Identifiable, Sendable, Equatable, CustomS
         } else {
             self.auth = nil
         }
+        self.serverTrustPolicy = serverTrustPolicy
     }
 
     public var description: String {

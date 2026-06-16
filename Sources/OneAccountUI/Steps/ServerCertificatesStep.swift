@@ -5,9 +5,11 @@ import SSLPinning
 @MainActor
 struct ServerCertificatesStep: View {
     let state: CertificatePreviewState
+    @Binding var policy: ServerTrustPolicy
+    
     var onRetry: () async -> Void
     var onContinue: () async throws -> Void
-
+    
     var body: some View {
         Section {
             if state.isLoading {
@@ -26,40 +28,17 @@ struct ServerCertificatesStep: View {
                     .font(.footnote)
             } else {
                 ForEach(state.chain, id: \.sha256) { info in
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text(info.subjectSummary ?? info.commonName ?? "Certificate")
-                            .font(.headline)
-                        Text("S/N: \(info.serialNumber)\nSHA256: \(info.sha256)")
-                            .font(.caption2.monospaced())
-                            .foregroundStyle(.secondary)
-#if !os(tvOS)
-                            .textSelection(.enabled)
-#else
-                            .lineLimit(3)
-#endif
-                        if let notValidBefore = info.notValidBefore, let notValidAfter = info.notValidAfter {
-                            Text("Valid: \(notValidBefore.formatted(date: .abbreviated, time: .omitted)) - \(notValidAfter.formatted(date: .abbreviated, time: .omitted))")
-                                .font(.subheadline)
-                        }
-                    }
-                    .padding(.vertical, 4)
+                    CertificateInfoView(info: info, full: info == state.chain.first)
                 }
             }
         } header: {
-            Text("Server certificates")
-            //TODO: menu with ServerTrustPolicy
-            //icon:
-//            shield.slash - trust all
-//            shield - trust system
-//            key.shield - trust pinned
-            //TODO: if pinned - show pin button and already pinned.
-            //TODO: проверить на selfsigned cert.
+            headerView
         } footer: {
             Text("Review the TLS chain for this HTTPS endpoint, then continue.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }
-
+        
         ActionButton(
             title: "Continue",
             isLoading: false,
@@ -69,4 +48,61 @@ struct ServerCertificatesStep: View {
         }
         .disabled(state.isLoading)
     }
+    
+    @ViewBuilder
+    var headerView: some View {
+        HStack {
+            Text("Server certificates")
+            
+            Spacer()
+            
+            policyLabel
+                .font(.caption2)
+        }
+    }
+    
+    @ViewBuilder
+    private var policyLabel: some View {
+        switch policy {
+        case .system:
+            Label("System Trust", systemImage: "shield")
+        case .trustEveryone:
+            Label("Trust All", systemImage: "shield.slash")
+        case .pinning(_):
+            Label("Pinned Certificates", systemImage: "key.shield")
+        case .pinningSpki(_):
+            Label("Pinned SPKI", systemImage: "key.shield")
+        }
+    }
+    
+    private var policyIcon: String {
+        switch policy {
+        case .system:
+            return "shield"
+        case .trustEveryone:
+            return "shield.slash"
+        case .pinning(_):
+            return "key.shield"
+        case .pinningSpki(_):
+            return "key.shield"
+        }
+    }
+    
+//    @ViewBuilder
+//    var pinCertificateButton: some View {
+//        if case .pinning(_) = policy, let leaf = state.chain.first {
+//            Button {
+//                pinCertificate(leaf)
+//            } label: {
+//                Label(
+//                    isPinned(leaf) ? "Pinned" : "Pin Certificate",
+//                    systemImage: isPinned(leaf)
+//                        ? "checkmark.seal.fill"
+//                        : "key"
+//                )
+//            }
+//        }
+//    }
 }
+
+

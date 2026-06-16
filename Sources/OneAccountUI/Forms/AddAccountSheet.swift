@@ -5,6 +5,14 @@ import DebugThings
 
 fileprivate func resolveEndpoint(_ input: String) async throws -> ResolvedEndpoint {
     let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+//    #if DEBUG
+//    if !trimmed.isEmpty, let url = URL(string: trimmed) {
+//        return ResolvedEndpoint(url: url, backend: .cloud)
+//    } else {
+//        throw URLError(.badURL)
+//    }
+//    
+//    #endif
     let result = try await WizardEndpointDiscovery.resolveEndpoint(trimmedURL: trimmed)
     return ResolvedEndpoint(url: result.url, backend: result.backend)
 }
@@ -21,7 +29,6 @@ public struct AddAccountSheet<WizardContent: View>: View {
     
     public init(
         endpointWizardMode: EndpointWizardMode = .free,
-        serverTrustPolicy: ServerTrustPolicy = .system,
         clientId: String,
         logger: (any URLSessionTaskLogger)? = nil,
         onSave: @escaping (Draft) -> Void,
@@ -37,7 +44,6 @@ public struct AddAccountSheet<WizardContent: View>: View {
                 mode: endpointWizardMode,
                 useCases: AccountCreationUseCases(
                     authService: auth,
-                    serverTrustPolicy: serverTrustPolicy,
                     resolveEndpoint: resolveEndpoint
                 )
             )
@@ -54,7 +60,6 @@ public struct AddAccountSheet<WizardContent: View>: View {
     ) where WizardContent == AccountCreationWizard {
         self.init(
             endpointWizardMode: endpointWizardMode,
-            serverTrustPolicy: serverTrustPolicy,
             clientId: clientId,
             logger: logger,
             onSave: onSave

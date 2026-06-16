@@ -1,30 +1,42 @@
 import Foundation
 import SSLPinning
+import TLSDiagnostics
 import DebugThings
 
 public struct AccountCreationUseCases: Sendable {
     public var authService: AuthService
-    public var serverTrustPolicy: ServerTrustPolicy
     public var resolveEndpoint: @Sendable (String) async throws -> ResolvedEndpoint
     
     public init(
         authService: AuthService,
-        serverTrustPolicy: ServerTrustPolicy = .system,
         resolveEndpoint: @Sendable @escaping (String) async throws -> ResolvedEndpoint
     ) {
         self.authService = authService
-        self.serverTrustPolicy = serverTrustPolicy
         self.resolveEndpoint = resolveEndpoint
     }
 
-    public func loadCertificates(for endpoint: Endpoint) async -> CertificatePreviewState {
+    public func loadCertificates(for endpoint: Endpoint, serverTrustPolicy: ServerTrustPolicy) async -> CertificatePreviewState {
         var state = CertificatePreviewState(isLoading: true)
         do {
-            state.chain = try await HTTPSCertificateProbe.fetchCertificateChain(
-                url: endpoint.url,
-                serverTrustPolicy: serverTrustPolicy
-            )
-            state.message = nil
+            let res = try await TLSProbe.inspect(for: endpoint.url, policy: serverTrustPolicy)
+            print("TLSProbe.inspect for \(endpoint.url.absoluteString): \(res)")
+            state.chain = res.chain
+            state.message = res.pinningError?.localizedDescription
+        } catch let error as SSLPinningError {
+            switch error {
+            case .invalidServerTrust(let host):
+                state.chain = []
+                state.message = error.localizedDescription
+            case .fingerprintMismatch(let host, let expected, let presentedChain):
+                state.chain = presentedChain
+                state.message = error.localizedDescription
+            case .unknownHost(let host, let presentedChain):
+                state.chain = presentedChain
+                state.message = error.localizedDescription
+            case .systemTrustFailed(let underlying):
+                state.chain = []
+                state.message = error.localizedDescription
+            }
         } catch {
             state.chain = []
             state.message = error.localizedDescription

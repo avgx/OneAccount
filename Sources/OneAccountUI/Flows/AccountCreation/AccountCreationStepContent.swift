@@ -25,9 +25,9 @@ struct AccountCreationStepContent: View {
             .onDisappear { suggestionLoader.cancelPendingWork() }
 
         case .serverCertificates:
-            endpointSummaryIfNeeded
             ServerCertificatesStep(
                 state: flow.certificatePreviewState,
+                policy: $flow.draft.serverTrustPolicy,
                 onRetry: { await flow.reloadCertificates() },
                 onContinue: {
                     flow.continueAfterCertificates()
@@ -35,7 +35,6 @@ struct AccountCreationStepContent: View {
             )
 
         case .credentials:
-            endpointSummaryIfNeeded
             CredentialsStep(
                 draft: $flow.draft,
                 state: $flow.credentialsState,
@@ -45,7 +44,6 @@ struct AccountCreationStepContent: View {
             )
 
         case .otp:
-            endpointSummaryIfNeeded
             OtpStep(
                 state: $flow.otpState,
                 onVerify: {
@@ -54,39 +52,8 @@ struct AccountCreationStepContent: View {
             )
 
         case .done:
-            endpointSummaryIfNeeded
             DoneStep(draft: $flow.draft)
         }
     }
 
-    @ViewBuilder
-    private var endpointSummaryIfNeeded: some View {
-//        if flow.step != .endpoint, let endpoint = flow.draft.resolvedEndpoint {
-//            Section {
-//                AccountCreationSummaryRow(title: "URL", value: endpoint.url.pretty())
-////                if let backend = endpoint.backend {
-////                    AccountCreationSummaryRow(title: "Backend", value: backend.rawValue)
-////                }
-//            } header: {
-//                Text("Selected server")
-//            }
-//            .listRowBackground(Color.clear)
-//        }
-        EmptyView()
-    }
-}
-
-@MainActor
-private struct AccountCreationSummaryRow: View {
-    let title: LocalizedStringKey
-    let value: String
-
-    var body: some View {
-        FormLabeledValue(title) {
-            Text(value)
-#if !os(tvOS)
-                .textSelection(.enabled)
-#endif
-        }
-    }
 }
