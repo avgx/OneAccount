@@ -77,7 +77,7 @@ private func runAddAccountWizardHeadlessNetwork(
     }
     let flow = AccountCreationFlow(
         mode: .free,
-        useCases: AccountCreationUseCases(authService: auth, serverTrustPolicy: .system, resolveEndpoint: resolveEndpoint)
+        useCases: AccountCreationUseCases(authService: auth, resolveEndpoint: resolveEndpoint)
     )
 
     #expect(flow.step == .endpoint)

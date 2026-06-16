@@ -1,6 +1,5 @@
 import Foundation
 import URLKit
-import OneAccount
 
 /// A successfully discovered server endpoint plus a short human summary for lists.
 public struct DiscoveryCandidate: Identifiable, Equatable, Sendable {

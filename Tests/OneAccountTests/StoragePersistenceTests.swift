@@ -10,7 +10,8 @@ private func sampleRecord(id: AccountID = UUID(), user: String = "user") -> Acco
         password: "",
         name: nil,
         backend: .next,
-        session: .next(NextSession(authToken: "test-access-token"))
+        session: .next(NextSession(authToken: "test-access-token")),
+        serverTrustPolicy: .system
     )
 }
 
