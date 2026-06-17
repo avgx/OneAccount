@@ -22,6 +22,7 @@ public struct AccountCreationUseCases: Sendable {
             print("TLSProbe.inspect for \(endpoint.url.absoluteString): \(res)")
             state.chain = res.chain
             state.message = res.pinningError?.localizedDescription
+            state.trustStatus = res.trustStatus
         } catch let error as SSLPinningError {
             switch error {
             case .invalidServerTrust(let host):

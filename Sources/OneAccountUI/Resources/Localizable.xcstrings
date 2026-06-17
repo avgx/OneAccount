@@ -1,0 +1,170 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "" : {
+
+    },
+    "%@" : {
+
+    },
+    "%@ → %@" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$@ → %2$@"
+          }
+        }
+      }
+    },
+    "Account" : {
+
+    },
+    "accounts" : {
+
+    },
+    "Accounts" : {
+
+    },
+    "Add account" : {
+
+    },
+    "Add Account" : {
+
+    },
+    "Backend" : {
+
+    },
+    "Cancel" : {
+
+    },
+    "connect" : {
+
+    },
+    "connecting" : {
+
+    },
+    "Continue" : {
+
+    },
+    "Copy" : {
+
+    },
+    "Credentials" : {
+
+    },
+    "Demo" : {
+
+    },
+    "Enter 6-digit code" : {
+
+    },
+    "Enter your password to obtain new session tokens." : {
+
+    },
+    "Error" : {
+
+    },
+    "Key" : {
+      "extractionState" : "manual"
+    },
+    "Name" : {
+
+    },
+    "No certificate data." : {
+
+    },
+    "Not trusted by system" : {
+
+    },
+    "OK" : {
+
+    },
+    "optional" : {
+
+    },
+    "OTP" : {
+
+    },
+    "password" : {
+
+    },
+    "Password" : {
+
+    },
+    "Pinned Certificates" : {
+
+    },
+    "Pinned SPKI" : {
+
+    },
+    "Re-login" : {
+
+    },
+    "Rename" : {
+
+    },
+    "Retry" : {
+
+    },
+    "Review and tap the checkmark in the toolbar to save." : {
+
+    },
+    "Self-signed" : {
+
+    },
+    "Sign in" : {
+
+    },
+    "Step %lld of %lld" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Step %1$lld of %2$lld"
+          }
+        }
+      }
+    },
+    "Suggestions" : {
+
+    },
+    "System Trust" : {
+
+    },
+    "TLS chain" : {
+
+    },
+    "TOTP" : {
+
+    },
+    "Trust All" : {
+
+    },
+    "Trust policy" : {
+
+    },
+    "Trusted by system" : {
+
+    },
+    "url" : {
+
+    },
+    "URL" : {
+
+    },
+    "URL of server or cloud" : {
+
+    },
+    "user" : {
+
+    },
+    "User" : {
+
+    },
+    "Verify" : {
+
+    }
+  },
+  "version" : "1.1"
+}

@@ -68,7 +68,8 @@ let package = Package(
                 .product(name: "HTTP", package: "Get"),
                 .product(name: "ButtonKit", package: "ButtonKit"),
                 .product(name: "Shimmer", package: "SwiftUI-Shimmer"),
-            ]
+            ],
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "OneAccountTests",

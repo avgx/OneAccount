@@ -99,13 +99,18 @@ public final class AccountCreationFlow: ObservableObject {
         }
     }
 
-    public func reloadCertificates() async {
+    public func reloadCertificates(probePolicy: ServerTrustPolicy = .system) async {
         guard let endpoint = draft.resolvedEndpoint else {
             certificatePreviewState = CertificatePreviewState(message: AccountCreationFlowError.missingResolvedEndpoint.localizedDescription)
             return
         }
+        let preservedTrustStatus = probePolicy == .system ? nil : certificatePreviewState.trustStatus
         certificatePreviewState = CertificatePreviewState(isLoading: true)
-        certificatePreviewState = await useCases.loadCertificates(for: endpoint, serverTrustPolicy: draft.serverTrustPolicy)
+        var loaded = await useCases.loadCertificates(for: endpoint, serverTrustPolicy: probePolicy)
+        if let preservedTrustStatus {
+            loaded.trustStatus = preservedTrustStatus
+        }
+        certificatePreviewState = loaded
     }
 
     public func continueAfterCertificates() {
