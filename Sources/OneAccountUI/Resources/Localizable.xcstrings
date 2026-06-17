@@ -65,6 +65,9 @@
     "Error" : {
 
     },
+    "Issuer" : {
+
+    },
     "Key" : {
       "extractionState" : "manual"
     },
@@ -113,7 +116,16 @@
     "Self-signed" : {
 
     },
+    "Serial" : {
+
+    },
+    "SHA-256" : {
+
+    },
     "Sign in" : {
+
+    },
+    "SPKI" : {
 
     },
     "Step %lld of %lld" : {
@@ -160,6 +172,9 @@
 
     },
     "User" : {
+
+    },
+    "Valid" : {
 
     },
     "Verify" : {

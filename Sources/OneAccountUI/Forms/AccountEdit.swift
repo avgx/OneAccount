@@ -19,24 +19,8 @@ struct AccountEdit: View {
                 TextField("Name", text: $name)
             } footer: {
                 VStack {
-                    if #available(iOS 16.0, tvOS 16.0, *) {
-                        LabeledContent("URL", value: account.baseURL.pretty())
-                    } else {
-                        HStack {
-                            Text("URL")
-                            Spacer()
-                            Text(account.baseURL.pretty())
-                        }
-                    }
-                    if #available(iOS 16.0, tvOS 16.0, *) {
-                        LabeledContent("User", value: account.user)
-                    } else {
-                        HStack {
-                            Text("User")
-                            Spacer()
-                            Text(account.user)
-                        }
-                    }
+                    LabeledRow("URL", systemImage: "globe", value: account.baseURL.pretty())
+                    LabeledRow("User", systemImage: "person", value: account.user)
                 }
                 .foregroundStyle(.secondary)
             }

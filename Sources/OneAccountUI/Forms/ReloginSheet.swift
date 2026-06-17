@@ -38,7 +38,7 @@ public struct ReloginSheet: View {
     public var body: some View {
         Form {
             Section {
-                FormLabeledValue("URL") {
+                LabeledRow("URL", systemImage: "link") {
                     Text(account.endpoint.url.absoluteString)
                         .font(.caption)
 #if !os(tvOS)
@@ -46,11 +46,9 @@ public struct ReloginSheet: View {
 #endif
                 }
                 if let b = account.endpoint.backend {
-                    FormLabeledValue("Backend") {
-                        Text(b.rawValue)
-                    }
+                    LabeledRow("Backend", systemImage: "server.rack", value: b.rawValue)
                 }
-                FormLabeledValue("User") {
+                LabeledRow("User", systemImage: "person") {
                     Text(account.credentials.user)
 #if !os(tvOS)
                         .textSelection(.enabled)

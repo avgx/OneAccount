@@ -11,117 +11,53 @@ struct CertificateInfoView: View {
     }
 
     let info: CertificateInfo
-    let role: String?
     let full: Bool
     var pinHighlight: PinHighlight = .none
 
+    private var isValid: Bool {
+        info.validityRange.notBefore <= Date() && info.validityRange.notAfter >= Date()
+    }
+
+    private var validityText: String {
+        "\(info.validityRange.notBefore.formatted(date: .abbreviated, time: .omitted)) → \(info.validityRange.notAfter.formatted(date: .abbreviated, time: .omitted))"
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack {
-                Text(info.commonName)
-                    .font(.headline)
-                Spacer()
-            }
-            .padding(4)
-            
+        Group {
+            LabeledRow("Name", systemImage: "signature", value: info.commonName)
+
             if let organization = Self.organization(from: info.issuer) {
-                HStack {
-                    Image(systemName: "building.2")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Text(organization)
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(4)
+                LabeledRow("Issuer", systemImage: "building.2", value: organization)
             }
 
-            let isValid = info.validityRange.notBefore <= Date() && info.validityRange.notAfter >= Date()
-            HStack {
-                Image(systemName: "calendar")
-                    .font(.caption)
-                    .foregroundColor(isValid ? .secondary : .red)
-                Text("\(info.validityRange.notBefore.formatted(date: .abbreviated, time: .omitted)) → \(info.validityRange.notAfter.formatted(date: .abbreviated, time: .omitted))")
-                    .font(.subheadline)
-                    .foregroundColor(isValid ? .secondary : .red)
+            LabeledRow("Valid", systemImage: "calendar") {
+                Text(validityText)
+                    .foregroundColor(isValid ? Color.secondary : Color.red)
             }
-            .padding(4)
-            
+
             if full {
-                fingerprintRow(
-                    icon: "key",
-                    value: info.spki,
-                    highlighted: pinHighlight == .spki
-                )
-
-                fingerprintRow(
-                    icon: "barcode",
-                    value: info.sha256,
-                    highlighted: pinHighlight == .certificate
-                )
-
-                fingerprintRow(
-                    icon: "number",
-                    value: info.serialNumber,
-                    highlighted: pinHighlight == .certificate
-                )
-                
-                
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            if full && info.isSelfSigned == true {
-                HStack {
-                    Spacer()
-                    Image(systemName: "exclamationmark.triangle")
-                        .foregroundColor(.red)
-                    Text("Self-signed")
-                        .font(.caption2.monospaced())
-                        .foregroundStyle(.secondary)
+                LabeledRow("SPKI", systemImage: "key") {
+                    monospacedValue(info.spki)
                 }
-            } else if let role {
-                HStack {
-                    Spacer()
-                    Text(role)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                .labeledRowHighlighted(pinHighlight == .spki)
+
+                LabeledRow("SHA-256", systemImage: "barcode") {
+                    monospacedValue(info.sha256)
                 }
+                .labeledRowHighlighted(pinHighlight == .certificate)
+
+                LabeledRow("Serial", systemImage: "number", value: info.serialNumber)
             }
         }
-        .contextMenu {
-            Button(action: copyCertificateInfo) {
-                Label("Copy", systemImage: "doc.on.doc")
-            }
-        }
+        .modifier(CertificateCopyMenuModifier(info: info))
     }
 
     @ViewBuilder
-    private func fingerprintRow(icon: String, value: String, highlighted: Bool) -> some View {
-        HStack {
-            Image(systemName: icon)
-                .font(.caption)
-            Text(value)
-                .font(.caption2.monospaced())
-                .foregroundStyle(.secondary)
-        }
-        .padding(4)
-        .background(highlighted ? Color.accentColor.opacity(0.18) : Color.clear, in: RoundedRectangle(cornerRadius: 6))
-        .overlay {
-            if highlighted {
-                RoundedRectangle(cornerRadius: 6)
-                    .strokeBorder(Color.accentColor.opacity(0.5), lineWidth: 1)
-            }
-        }
-    }
-
-    private func copyCertificateInfo() {
-        let infoText = info.description + "\n\n" + (info.pem ?? "")
-        #if os(iOS)
-        UIPasteboard.general.string = infoText
-        #elseif os(macOS)
-        NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(infoText, forType: .string)
-        #endif
+    private func monospacedValue(_ value: String) -> some View {
+        Text(value)
+            .font(.caption.monospaced())
+            .lineLimit(1)
+            .truncationMode(.middle)
     }
 
     /// Extracts the organization (`O=`) attribute from a distinguished name string.
@@ -139,3 +75,35 @@ struct CertificateInfoView: View {
         return nil
     }
 }
+
+#if os(iOS) || os(macOS)
+private struct CertificateCopyMenuModifier: ViewModifier {
+    let info: CertificateInfo
+
+    func body(content: Content) -> some View {
+        content.contextMenu {
+            Button(action: copyCertificateInfo) {
+                Label("Copy", systemImage: "doc.on.doc")
+            }
+        }
+    }
+
+    private func copyCertificateInfo() {
+        let infoText = info.description + "\n\n" + (info.pem ?? "")
+        #if os(iOS)
+        UIPasteboard.general.string = infoText
+        #elseif os(macOS)
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(infoText, forType: .string)
+        #endif
+    }
+}
+#else
+private struct CertificateCopyMenuModifier: ViewModifier {
+    let info: CertificateInfo
+
+    func body(content: Content) -> some View {
+        content
+    }
+}
+#endif

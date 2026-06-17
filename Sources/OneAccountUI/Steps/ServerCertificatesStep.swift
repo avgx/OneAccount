@@ -29,27 +29,13 @@ struct ServerCertificatesStep: View {
     }
 
     var body: some View {
-        Section {
-            certificateContent
-        } header: {
-            Text("TLS chain")
-        }
+        statusSection
+        certificateSections
+        policySection
+        continueButton
+    }
 
-        Section {
-            Picker("Trust policy", selection: $policyChoice) {
-                ForEach(TrustPolicyChoice.allCases) { option in
-                    Label(option.title, systemImage: option.icon)
-                        .labelStyle(.titleOnly)
-                        .tag(option)
-                }
-            }
-            .pickerStyle(.menu)
-        } footer: {
-            Text(policy.localizedDescription())
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-        }
-
+    private var continueButton: some View {
         ActionButton(
             title: "Continue",
             isLoading: false,
@@ -75,38 +61,71 @@ struct ServerCertificatesStep: View {
     }
 
     @ViewBuilder
-    private var certificateContent: some View {
-        if state.isLoading {
-            ProgressView()
-                .frame(maxWidth: .infinity)
-        } else {
-            statusBanner
+    private var statusSection: some View {
+        Section {
+            if state.isLoading {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+            } else {
+                statusBanner
 
-            if let err = loadErrorMessage {
-                Text(err)
-                    .foregroundStyle(.red)
-                    .font(.footnote)
-                Button("Retry") {
-                    Task { await onReload(.system) }
+                if let err = loadErrorMessage {
+                    Text(err)
+                        .foregroundStyle(.red)
+                        .font(.footnote)
+                    Button("Retry") {
+                        Task { await onReload(.system) }
+                    }
                 }
-            }
 
-            if displayedChain.isEmpty {
-                if loadErrorMessage == nil {
+                if displayedChain.isEmpty, loadErrorMessage == nil {
                     Text("No certificate data.")
                         .foregroundStyle(.secondary)
                         .font(.footnote)
                 }
-            } else {
-                ForEach(Array(displayedChain.enumerated()), id: \.element.sha256) { index, info in
+            }
+        } header: {
+            Text("TLS chain")
+        }
+    }
+
+    @ViewBuilder
+    private var certificateSections: some View {
+        if !state.isLoading {
+            ForEach(Array(displayedChain.enumerated()), id: \.element.sha256) { index, info in
+                Section {
                     CertificateInfoView(
                         info: info,
-                        role: roleLabel(for: index),
-                        full: showsLeafDetailsOnly ? true : index == 0,
+                        full: showsLeafDetailsOnly ? true : index == 0 && policyChoice != .system,
                         pinHighlight: pinHighlight(for: index)
                     )
+                } header: {
+                    Text(roleLabel(for: index))
+                } footer: {
+                    if index == 0, info.isSelfSigned == true {
+                        Label("Self-signed", systemImage: "exclamationmark.triangle")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
+        }
+    }
+
+    private var policySection: some View {
+        Section {
+            Picker("Trust policy", selection: $policyChoice) {
+                ForEach(TrustPolicyChoice.allCases) { option in
+                    Label(option.title, systemImage: option.icon)
+                        .labelStyle(.titleOnly)
+                        .tag(option)
+                }
+            }
+            .pickerStyle(.menu)
+        } footer: {
+            Text(policy.localizedDescription())
+                .font(.footnote)
+                .foregroundStyle(.secondary)
         }
     }
 
@@ -210,7 +229,6 @@ struct ServerCertificatesStep: View {
         )
         .font(.footnote)
         .foregroundColor(trustStatus.isTrusted ? Color.secondary : Color.red)
-        .padding(.bottom, 4)
     }
 
     @ViewBuilder
