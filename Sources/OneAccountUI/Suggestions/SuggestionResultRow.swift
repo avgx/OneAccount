@@ -1,9 +1,7 @@
 import SwiftUI
-import Shimmer
-import URLKit
 import OneAccount
 
-/// Displays one discovery candidate: loading, success (backend + summary), or failure. No network — data comes from ``SuggestionLoader``.
+/// Displays one discovered endpoint candidate.
 @MainActor
 struct SuggestionResultRow: View {
     let row: SuggestionLoader.Row
@@ -11,43 +9,18 @@ struct SuggestionResultRow: View {
 
     var body: some View {
         Button {
-            if case .succeeded(let candidate) = row.phase {
-                didSelect(candidate)
-            }
+            didSelect(row.candidate)
         } label: {
             HStack {
-                switch row.phase {
-                case .loading:
-                    DiscoveryRowLabel(
-                        title: "SomeUnknownURL.com",
-                        detail: "Some details about the URL",
-                        isError: false,
-                        showsCloudIcon: false
-                    )
-                case .succeeded(let candidate):
-                    DiscoveryRowLabel(
-                        title: candidate.rowTitle,
-                        detail: candidate.rowDetail,
-                        isError: false,
-                        showsCloudIcon: candidate.endpoint.backend == .cloud
-                    )
-                case .failed(let message):
-                    DiscoveryRowLabel(
-                        title: row.seedURL.removingCredentials().pretty(),
-                        detail: message,
-                        isError: true
-                    )
-                }
+                DiscoveryRowLabel(
+                    title: row.candidate.rowTitle,
+                    detail: row.candidate.rowDetail,
+                    isError: false,
+                    showsCloudIcon: row.candidate.endpoint.backend == .cloud
+                )
                 Spacer()
             }
         }
-        .disabled(!isSelectable)
-        .redacted(reason: row.phase == .loading ? .placeholder : [])
-        .shimmering(active: row.phase == .loading)
-    }
-
-    private var isSelectable: Bool {
-        if case .succeeded(let candidate) = row.phase, candidate.endpoint.backend != nil { return true }
-        return false
+        .buttonStyle(.plain)
     }
 }

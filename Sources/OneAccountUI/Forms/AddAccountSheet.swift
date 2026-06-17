@@ -90,7 +90,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
         VStack(spacing: 4) {
             if flow.step != .endpoint, let endpoint = flow.draft.resolvedEndpoint {
                 HStack(spacing: 4) {
-                    Image(systemName: endpoint.backend?.icon ?? "pc")
+                    Image(systemName: endpoint.backend.icon)
                     Text(endpoint.url.pretty())
                 }
             } else {
@@ -121,7 +121,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
     if #available(iOS 16.0, tvOS 16.0, *) {
         NavigationStack {
             AddAccountSheet(clientId: UUID().uuidString) { draft in
-                print("add \(draft.url)")
+                print("add \(draft.resolvedEndpoint?.url.absoluteString ?? "")")
             }
         }
     } else {
@@ -134,11 +134,11 @@ public struct AddAccountSheet<WizardContent: View>: View {
         NavigationStack {
             AddAccountSheet(
                 endpointWizardMode: EndpointWizardMode.locked(
-                    Endpoint(url: URL(string: "https://axxonnet.com")!, backend: .cloud)
+                    ResolvedEndpoint(url: URL(string: "https://axxonnet.com")!, backend: .cloud)
                 ),
                 clientId: UUID().uuidString
             ) { draft in
-                print("add locked \(draft.url)")
+                print("add locked \(draft.resolvedEndpoint?.url.absoluteString ?? "")")
             }
         }
     } else {
@@ -153,7 +153,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
         AddAccountSheet(
             clientId: UUID().uuidString,
             onSave: { draft in
-                print("add ios18 \(draft.url)")
+                print("add ios18 \(draft.resolvedEndpoint?.url.absoluteString ?? "")")
             }
         ) { flow in
             AccountCreationWizard(flow: flow)

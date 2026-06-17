@@ -11,15 +11,18 @@ struct AccountCreationStepContent: View {
         switch flow.step {
         case .endpoint:
             EndpointStep(
-                draft: $flow.draft,
                 suggestionLoader: suggestionLoader,
                 state: $flow.endpointState,
                 suggestions: suggestions,
-                onSelectSuggestion: { candidate in
-                    Task { await flow.selectDiscoveryCandidate(candidate) }
+                onSelectRow: { selection in
+                    Task { await flow.selectDiscoveryRow(selection) }
                 },
                 onConnect: {
-                    try await flow.resolveEndpoint()
+                    let preferred = suggestionLoader.rows.first?.candidate
+                    try await flow.connectEndpoint(preferredCandidate: preferred)
+                },
+                onURLChanged: {
+                    flow.clearResolvedEndpointOnURLChange()
                 }
             )
             .onDisappear { suggestionLoader.cancelPendingWork() }

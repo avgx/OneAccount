@@ -25,7 +25,7 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(url: "https://github.com/avgx/OneDiscovery", from: "1.0.0"),
+        .package(path: "../OneDiscovery"),
         .package(url: "https://github.com/auth0/JWTDecode.swift", from: "4.0.0"),
         .package(url: "https://github.com/avgx/SSLPinning.git", from: "2.0.0"),
         .package(url: "https://github.com/avgx/TLSDiagnostics.git", from: "1.0.1"),

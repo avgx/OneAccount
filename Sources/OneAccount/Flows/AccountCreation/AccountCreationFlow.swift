@@ -6,13 +6,14 @@ import SSLPinning
 public final class AccountCreationFlow: ObservableObject {
     @Published public var draft: Draft
     @Published public var step: AccountCreationStep
-    @Published public var endpointState = EndpointInputState()
+    @Published public var endpointState = EndpointStepState()
     @Published public var credentialsState = CredentialsState()
     @Published public var otpState = OTPState()
     @Published public var certificatePreview: CertificatePreview = .idle
 
     public let endpointWizardMode: EndpointWizardMode
     private let useCases: AccountCreationUseCases
+    private var pendingDemoSignIn = false
 
     public init(
         mode: EndpointWizardMode = .free,
@@ -26,8 +27,8 @@ public final class AccountCreationFlow: ObservableObject {
         case .free:
             step = .endpoint
         case .locked(let endpoint):
-            initialDraft.url = endpoint.url.absoluteString
-            initialDraft.backend = endpoint.backend
+            initialDraft.resolvedEndpoint = endpoint
+            initialDraft.serverTrustPolicy = .system
             step = Self.shouldPreviewCertificates(for: endpoint.url) ? .serverCertificates : .credentials
         }
         draft = initialDraft
@@ -44,7 +45,7 @@ public final class AccountCreationFlow: ObservableObject {
 
     public var canSave: Bool {
         guard step == .done else { return false }
-        return draft.resolvedEndpoint?.backend != nil
+        return draft.resolvedEndpoint != nil
             && !draft.user.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && !draft.password.isEmpty
     }
@@ -63,6 +64,7 @@ public final class AccountCreationFlow: ObservableObject {
     }
 
     public var shouldPreviewCertificates: Bool {
+        guard !pendingDemoSignIn else { return false }
         guard let endpoint = draft.resolvedEndpoint else { return false }
         return Self.shouldPreviewCertificates(for: endpoint.url)
     }
@@ -76,22 +78,60 @@ public final class AccountCreationFlow: ObservableObject {
         draft.session = nil
     }
 
-    public func selectDiscoveryCandidate(_ candidate: DiscoveryCandidate) async {
-        draft.applyDiscoveryCandidate(candidate.endpoint)
+    public func validateDemoCredentials(_ request: AccountCredentialsRequest) async -> Bool {
+        do {
+            let outcome = try await useCases.validateCredentials(request)
+            if case .authenticated = outcome {
+                return true
+            }
+            return false
+        } catch {
+            return false
+        }
+    }
+
+    public func selectDiscoveryRow(_ row: DiscoveryRowSelection) async {
         endpointState.message = nil
+        pendingDemoSignIn = false
+        applyDiscoverySelection(candidate: row.candidate, seedURL: row.seedURL)
+
+        if row.isDemo {
+            draft.serverTrustPolicy = .system
+            pendingDemoSignIn = true
+        }
+
         await transitionAfterEndpointReady()
     }
 
-    public func resolveEndpoint() async throws {
+    public func connectEndpoint(preferredCandidate: DiscoveryCandidate?) async throws {
         guard !isEndpointLocked else { return }
         endpointState.isResolving = true
         endpointState.message = nil
+        pendingDemoSignIn = false
         defer { endpointState.isResolving = false }
 
         do {
-            let resolved = try await useCases.resolveEndpoint(draft.url)
-            draft.url = resolved.url.absoluteString
-            draft.backend = resolved.backend
+            let resolvedURL: URL
+            let backend: Backend
+
+            if let preferredCandidate {
+                guard let resolvedBackend = preferredCandidate.endpoint.backend else {
+                    throw AccountCreationFlowError.missingResolvedEndpoint
+                }
+                resolvedURL = preferredCandidate.endpoint.url
+                backend = resolvedBackend
+            } else {
+                let resolved = try await useCases.resolveEndpoint(endpointState.urlText)
+                resolvedURL = resolved.url
+                backend = resolved.backend
+            }
+
+            guard EndpointURLInput.matchesResolvedURL(endpointState.urlText, resolved: resolvedURL) else {
+                endpointState.urlText = resolvedURL.absoluteString
+                return
+            }
+
+            draft.resolvedEndpoint = ResolvedEndpoint(url: resolvedURL, backend: backend)
             await transitionAfterEndpointReady()
         } catch {
             endpointState.message = Self.endpointMessage(for: error)
@@ -106,7 +146,7 @@ public final class AccountCreationFlow: ObservableObject {
         }
         let preservedTrustStatus = probePolicy == .system ? nil : certificatePreview.trustStatus
         var loaded = await useCases.loadCertificates(
-            for: endpoint,
+            for: endpoint.asEndpoint,
             serverTrustPolicy: probePolicy,
             current: certificatePreview
         )
@@ -119,6 +159,7 @@ public final class AccountCreationFlow: ObservableObject {
     public func continueAfterCertificates() {
         guard step == .serverCertificates else { return }
         step = .credentials
+        Task { await attemptDemoSignInIfNeeded() }
     }
 
     public func signIn() async throws {
@@ -138,7 +179,7 @@ public final class AccountCreationFlow: ObservableObject {
 
         do {
             let outcome = try await useCases.validateCredentials(
-                AccountCredentialsRequest(endpoint: endpoint, user: user, password: draft.password)
+                AccountCredentialsRequest(endpoint: endpoint.asEndpoint, user: user, password: draft.password)
             )
             credentialsState.message = nil
             credentialsState.signInOutcomeKnown = true
@@ -192,13 +233,56 @@ public final class AccountCreationFlow: ObservableObject {
         }
     }
 
+    public func clearResolvedEndpointOnURLChange() {
+        draft.resolvedEndpoint = nil
+        pendingDemoSignIn = false
+    }
+
+    private func applyDiscoverySelection(candidate: DiscoveryCandidate, seedURL: URL?) {
+        guard let backend = candidate.endpoint.backend else { return }
+
+        if let seedURL {
+            var components = URLComponents(url: seedURL, resolvingAgainstBaseURL: false)
+            let userPart = components?.user
+            let passwordPart = components?.password
+            components?.user = nil
+            components?.password = nil
+            components?.fragment = nil
+            if let cleanURL = components?.url {
+                endpointState.urlText = cleanURL.absoluteString
+            }
+            if let userPart, let passwordPart {
+                draft.user = userPart
+                draft.password = passwordPart
+            }
+        } else {
+            endpointState.urlText = candidate.endpoint.url.absoluteString
+        }
+
+        draft.resolvedEndpoint = ResolvedEndpoint(url: candidate.endpoint.url, backend: backend)
+    }
+
     private func transitionAfterEndpointReady() async {
+        guard draft.resolvedEndpoint != nil else { return }
         resetCredentialState()
+
         if shouldPreviewCertificates {
             step = .serverCertificates
             await reloadCertificates()
-        } else {
-            step = .credentials
+            return
+        }
+
+        step = .credentials
+        await attemptDemoSignInIfNeeded()
+    }
+
+    private func attemptDemoSignInIfNeeded() async {
+        guard pendingDemoSignIn else { return }
+        pendingDemoSignIn = false
+        do {
+            try await signIn()
+        } catch {
+            // Remain on credentials; credentialsState.message is set by signIn.
         }
     }
 
@@ -223,16 +307,27 @@ public final class AccountCreationFlow: ObservableObject {
     }
 
     private static func endpointMessage(for error: Error) -> String {
-//        if let failure = error as? WizardEndpointDiscovery.DiscoveryFailure {
-//            switch failure {
-//            case .emptyInput, .noSeeds:
-//                return URLError(.badURL).localizedDescription
-//            case .unsupportedBackend:
-//                return URLError(.cannotFindHost).localizedDescription
-//            case .underlying(let err):
-//                return err.localizedDescription
-//            }
-//        }
-        return error.localizedDescription
+        if let localized = error as? LocalizedError,
+           let description = localized.errorDescription,
+           !description.isEmpty {
+            return description
+        }
+        if let urlError = error as? URLError {
+            return urlError.localizedDescription
+        }
+        return "Could not connect to server."
+    }
+}
+
+/// Selection payload from a suggestion row tap.
+public struct DiscoveryRowSelection: Equatable, Sendable {
+    public var candidate: DiscoveryCandidate
+    public var seedURL: URL?
+    public var isDemo: Bool
+
+    public init(candidate: DiscoveryCandidate, seedURL: URL? = nil, isDemo: Bool = false) {
+        self.candidate = candidate
+        self.seedURL = seedURL
+        self.isDemo = isDemo
     }
 }

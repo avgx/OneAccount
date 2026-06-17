@@ -8,7 +8,7 @@ struct DoneStep: View {
 
     var body: some View {
         Section {
-            if let endpoint = draft.resolvedEndpoint, endpoint.backend != nil {
+            if let endpoint = draft.resolvedEndpoint {
                 let defaultName = endpoint.backend == .cloud ? draft.user : "\(draft.user)@\(endpoint.url.pretty())"
                 TextField("\(defaultName)", text: $draft.displayName)
             } else {

@@ -1,20 +1,18 @@
 import Foundation
 
 extension AccountRecord {
-    /// Builds a persisted account from an account-creation draft when URL and backend are resolved.
+    /// Builds a persisted account from an account-creation draft when the endpoint is resolved.
     public init?(draft: Draft) {
-        guard let backend = draft.backend else { return nil }
-        let trimmedURL = draft.url.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmedURL.isEmpty, let url = URL(string: trimmedURL) else { return nil }
+        guard let endpoint = draft.resolvedEndpoint else { return nil }
         let name: String? = draft.displayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             ? nil
             : draft.displayName
         self.init(
-            baseURL: url,
+            baseURL: endpoint.url,
             user: draft.user,
             password: draft.password,
             name: name,
-            backend: backend,
+            backend: endpoint.backend,
             session: draft.session,
             serverTrustPolicy: draft.serverTrustPolicy
         )
