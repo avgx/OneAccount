@@ -5,14 +5,6 @@ import DebugThings
 
 fileprivate func resolveEndpoint(_ input: String) async throws -> ResolvedEndpoint {
     let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-#if DEBUG
-    if !trimmed.isEmpty, let url = URL(string: trimmed) {
-        return ResolvedEndpoint(url: url, backend: .cloud)
-    } else {
-        throw URLError(.badURL)
-    }
-    
-#endif 
     let result = try await WizardEndpointDiscovery.resolveEndpoint(trimmedURL: trimmed)
     return ResolvedEndpoint(url: result.url, backend: result.backend)
 }

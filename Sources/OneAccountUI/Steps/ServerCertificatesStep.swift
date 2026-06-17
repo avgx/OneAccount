@@ -12,6 +12,7 @@ struct ServerCertificatesStep: View {
     var onContinue: () async throws -> Void
 
     @State private var policyChoice: TrustPolicyChoice
+    @State private var expandedCertSHA256s: Set<String> = []
 
     init(
         state: CertificatePreviewState,
@@ -51,6 +52,7 @@ struct ServerCertificatesStep: View {
             }
         }
         .onChange(of: state.chain) { _ in
+            expandedCertSHA256s = []
             switch policyChoice {
             case .pinningCert, .pinningSpki:
                 syncPolicyFromChoice()
@@ -96,11 +98,11 @@ struct ServerCertificatesStep: View {
                 Section {
                     CertificateInfoView(
                         info: info,
-                        full: showsLeafDetailsOnly ? true : index == 0 && policyChoice != .system,
+                        style: certificateStyle(for: index, sha256: info.sha256),
                         pinHighlight: pinHighlight(for: index)
                     )
                 } header: {
-                    Text(roleLabel(for: index))
+                    certificateSectionHeader(for: index, info: info)
                 } footer: {
                     if index == 0, info.isSelfSigned == true {
                         Label("Self-signed", systemImage: "exclamationmark.triangle")
@@ -189,11 +191,9 @@ struct ServerCertificatesStep: View {
 
         switch policyChoice {
         case .pinningCert:
-            let prefix = String(leaf.sha256.prefix(6))
-            return "Pin \(name) with \(prefix)…"
+            return "Pin \(name) with \(leaf.sha256)"
         case .pinningSpki:
-            let prefix = String(leaf.spki.prefix(6))
-            return "Pin \(name) with \(prefix)…"
+            return "Pin \(name) with \(leaf.spki)"
         case .system, .trustEveryone:
             return nil
         }
@@ -241,7 +241,6 @@ struct ServerCertificatesStep: View {
         }
         .font(.footnote)
         .foregroundStyle(.secondary)
-        .padding(.bottom, 4)
     }
 
     @ViewBuilder
@@ -249,7 +248,6 @@ struct ServerCertificatesStep: View {
         Label(title, systemImage: systemImage)
             .font(.footnote)
             .foregroundStyle(.secondary)
-            .padding(.bottom, 4)
     }
 
     private func roleLabel(for index: Int) -> String {
@@ -267,6 +265,47 @@ struct ServerCertificatesStep: View {
             return "Root"
         }
         return "Intermediate"
+    }
+
+    private func isCollapsible(index: Int) -> Bool {
+        !showsLeafDetailsOnly && index > 0
+    }
+
+    private func isExpanded(sha256: String) -> Bool {
+        expandedCertSHA256s.contains(sha256)
+    }
+
+    private func toggleExpanded(sha256: String) {
+        if expandedCertSHA256s.contains(sha256) {
+            expandedCertSHA256s.remove(sha256)
+        } else {
+            expandedCertSHA256s.insert(sha256)
+        }
+    }
+
+    private func certificateStyle(for index: Int, sha256: String) -> CertificateInfoView.DisplayStyle {
+        if isCollapsible(index: index), !isExpanded(sha256: sha256) {
+            return .nameOnly
+        }
+        let showsFingerprints = showsLeafDetailsOnly || (index == 0 && policyChoice != .system)
+        return showsFingerprints ? .fingerprints : .summary
+    }
+
+    @ViewBuilder
+    private func certificateSectionHeader(for index: Int, info: CertificateInfo) -> some View {
+        HStack {
+            Text(roleLabel(for: index))
+            Spacer()
+            if isCollapsible(index: index) {
+                Button {
+                    toggleExpanded(sha256: info.sha256)
+                } label: {
+                    Image(systemName: isExpanded(sha256: info.sha256) ? "chevron.up" : "chevron.down")
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+        .textCase(nil)
     }
 
     private func pinHighlight(for index: Int) -> CertificateInfoView.PinHighlight {

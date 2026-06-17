@@ -4,6 +4,12 @@ import SSLPinning
 
 @MainActor
 struct CertificateInfoView: View {
+    enum DisplayStyle: Equatable {
+        case nameOnly
+        case summary
+        case fingerprints
+    }
+
     enum PinHighlight: Equatable {
         case none
         case certificate
@@ -11,7 +17,7 @@ struct CertificateInfoView: View {
     }
 
     let info: CertificateInfo
-    let full: Bool
+    let style: DisplayStyle
     var pinHighlight: PinHighlight = .none
 
     private var isValid: Bool {
@@ -22,20 +28,26 @@ struct CertificateInfoView: View {
         "\(info.validityRange.notBefore.formatted(date: .abbreviated, time: .omitted)) → \(info.validityRange.notAfter.formatted(date: .abbreviated, time: .omitted))"
     }
 
+    private var showsSummary: Bool {
+        style == .summary || style == .fingerprints
+    }
+
     var body: some View {
         Group {
             LabeledRow("Name", systemImage: "signature", value: info.commonName)
 
-            if let organization = Self.organization(from: info.issuer) {
-                LabeledRow("Issuer", systemImage: "building.2", value: organization)
+            if showsSummary {
+                if let organization = Self.organization(from: info.issuer) {
+                    LabeledRow("Issuer", systemImage: "building.2", value: organization)
+                }
+
+                LabeledRow("Valid", systemImage: "calendar") {
+                    Text(validityText)
+                        .foregroundColor(isValid ? Color.secondary : Color.red)
+                }
             }
 
-            LabeledRow("Valid", systemImage: "calendar") {
-                Text(validityText)
-                    .foregroundColor(isValid ? Color.secondary : Color.red)
-            }
-
-            if full {
+            if style == .fingerprints {
                 LabeledRow("SPKI", systemImage: "key") {
                     monospacedValue(info.spki)
                 }
@@ -46,7 +58,10 @@ struct CertificateInfoView: View {
                 }
                 .labeledRowHighlighted(pinHighlight == .certificate)
 
-                LabeledRow("Serial", systemImage: "number", value: info.serialNumber)
+                LabeledRow("Serial", systemImage: "number") {
+                    monospacedValue(info.serialNumber)
+                }
+                .labeledRowHighlighted(pinHighlight == .certificate)
             }
         }
         .modifier(CertificateCopyMenuModifier(info: info))
