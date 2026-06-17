@@ -4,7 +4,7 @@ import SSLPinning
 
 @MainActor
 struct ServerCertificatesStep: View {
-    let state: CertificatePreviewState
+    let preview: CertificatePreview
     let host: String
     @Binding var policy: ServerTrustPolicy
 
@@ -15,13 +15,13 @@ struct ServerCertificatesStep: View {
     @State private var expandedCertSHA256s: Set<String> = []
 
     init(
-        state: CertificatePreviewState,
+        preview: CertificatePreview,
         host: String,
         policy: Binding<ServerTrustPolicy>,
         onReload: @escaping (ServerTrustPolicy) async -> Void,
         onContinue: @escaping () async throws -> Void
     ) {
-        self.state = state
+        self.preview = preview
         self.host = host
         self._policy = policy
         self.onReload = onReload
@@ -47,11 +47,11 @@ struct ServerCertificatesStep: View {
         .disabled(isContinueDisabled)
         .onChange(of: policyChoice) { newChoice in
             syncPolicyFromChoice()
-            if newChoice == .trustEveryone, state.chain.isEmpty, !state.isLoading {
+            if newChoice == .trustEveryone, preview.chain.isEmpty, !preview.isLoading {
                 Task { await onReload(.trustEveryone) }
             }
         }
-        .onChange(of: state.chain) { _ in
+        .onChange(of: preview.chain) { _ in
             expandedCertSHA256s = []
             switch policyChoice {
             case .pinningCert, .pinningSpki:
@@ -65,7 +65,7 @@ struct ServerCertificatesStep: View {
     @ViewBuilder
     private var statusSection: some View {
         Section {
-            if state.isLoading {
+            if preview.isLoading {
                 ProgressView()
                     .frame(maxWidth: .infinity)
             } else {
@@ -93,7 +93,7 @@ struct ServerCertificatesStep: View {
 
     @ViewBuilder
     private var certificateSections: some View {
-        if !state.isLoading {
+        if !preview.isLoading {
             ForEach(Array(displayedChain.enumerated()), id: \.element.sha256) { index, info in
                 Section {
                     CertificateInfoView(
@@ -133,15 +133,15 @@ struct ServerCertificatesStep: View {
 
     /// Probe errors from the last network load (system policy), or when the chain is still empty.
     private var loadErrorMessage: String? {
-        guard state.chain.isEmpty || policyChoice == .system else { return nil }
-        return state.message
+        guard preview.chain.isEmpty || policyChoice == .system else { return nil }
+        return preview.failure?.localizedDescription ?? (preview.chain.isEmpty ? preview.pinningMessage : nil)
     }
 
     private var isContinueDisabled: Bool {
-        if state.isLoading || state.chain.isEmpty {
+        if preview.isLoading || preview.chain.isEmpty {
             return true
         }
-        if policyChoice == .system, state.trustStatus?.isTrusted == false {
+        if policyChoice == .system, preview.trustStatus?.isTrusted == false {
             return true
         }
         return false
@@ -158,16 +158,16 @@ struct ServerCertificatesStep: View {
 
     private var displayedChain: [CertificateInfo] {
         if showsLeafDetailsOnly {
-            return Array(state.chain.prefix(1))
+            return Array(preview.chain.prefix(1))
         }
-        return state.chain
+        return preview.chain
     }
 
     @ViewBuilder
     private var statusBanner: some View {
         switch policyChoice {
         case .system:
-            if let trustStatus = state.trustStatus {
+            if let trustStatus = preview.trustStatus {
                 systemTrustBanner(trustStatus)
             }
         case .pinningCert, .pinningSpki:
@@ -175,7 +175,7 @@ struct ServerCertificatesStep: View {
                 pinStatusBanner(text: pinBannerText)
             }
         case .trustEveryone:
-            if !state.chain.isEmpty {
+            if !preview.chain.isEmpty {
                 policyStatusBanner(
                     title: "Connection allowed",
                     systemImage: "checkmark.shield"
@@ -185,7 +185,7 @@ struct ServerCertificatesStep: View {
     }
 
     private var pinBannerText: String? {
-        guard isPinVerified, let leaf = state.chain.first else { return nil }
+        guard isPinVerified, let leaf = preview.chain.first else { return nil }
         let name = host.isEmpty ? leaf.commonName : host
         guard !name.isEmpty else { return nil }
 
@@ -200,7 +200,7 @@ struct ServerCertificatesStep: View {
     }
 
     private var isPinVerified: Bool {
-        guard let leaf = state.chain.first, !host.isEmpty else { return false }
+        guard let leaf = preview.chain.first, !host.isEmpty else { return false }
         switch policyChoice {
         case .pinningCert:
             guard case .pinning(let pins) = policy else { return false }
@@ -254,7 +254,7 @@ struct ServerCertificatesStep: View {
         if showsLeafDetailsOnly {
             return "Server"
         }
-        return role(for: index, count: state.chain.count)
+        return role(for: index, count: preview.chain.count)
     }
 
     private func role(for index: Int, count: Int) -> String {
@@ -327,13 +327,13 @@ struct ServerCertificatesStep: View {
         case .trustEveryone:
             policy = .trustEveryone
         case .pinningCert:
-            if let leaf = state.chain.first, !host.isEmpty {
+            if let leaf = preview.chain.first, !host.isEmpty {
                 policy = .pinning([Fingerprint(host: host, certificate: leaf)])
             } else {
                 policy = .pinning([])
             }
         case .pinningSpki:
-            if let leaf = state.chain.first, !host.isEmpty {
+            if let leaf = preview.chain.first, !host.isEmpty {
                 policy = .pinningSpki([Fingerprint(host: host, spkiFrom: leaf)])
             } else {
                 policy = .pinningSpki([])

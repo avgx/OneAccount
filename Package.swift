@@ -34,6 +34,7 @@ let package = Package(
         .package(url: "https://github.com/avgx/EncodeDecode.git", from: "1.0.2"),
         .package(url: "https://github.com/avgx/URLKit.git", from: "1.0.0"),
         .package(url: "https://github.com/avgx/DebugThings.git", from: "2.0.0"),
+        .package(url: "https://github.com/avgx/Resource.git", from: "1.0.0"),
         .package(url: "https://github.com/avgx/Get.git", from: "6.1.0"),
         .package(url: "https://github.com/Dean151/ButtonKit.git", from: "0.7.1"),
         .package(url: "https://github.com/markiv/SwiftUI-Shimmer", from: "1.5.1"),
@@ -49,6 +50,7 @@ let package = Package(
                 .product(name: "SSLPinning", package: "SSLPinning"),
                 .product(name: "TLSDiagnostics", package: "TLSDiagnostics"),
                 .product(name: "DebugThings", package: "DebugThings"),
+                .product(name: "Resource", package: "Resource"),
                 .product(name: "URLKit", package: "URLKit"),
                 .product(name: "HTTP", package: "Get"),
             ]
@@ -64,6 +66,7 @@ let package = Package(
                 .product(name: "SSLPinning", package: "SSLPinning"),
                 .product(name: "TLSDiagnostics", package: "TLSDiagnostics"),
                 .product(name: "DebugThings", package: "DebugThings"),
+                .product(name: "Resource", package: "Resource"),
                 .product(name: "URLKit", package: "URLKit"),
                 .product(name: "HTTP", package: "Get"),
                 .product(name: "ButtonKit", package: "ButtonKit"),

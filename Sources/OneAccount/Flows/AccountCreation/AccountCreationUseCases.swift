@@ -2,6 +2,7 @@ import Foundation
 import SSLPinning
 import TLSDiagnostics
 import DebugThings
+import Resource
 
 public struct AccountCreationUseCases: Sendable {
     public var authService: AuthService
@@ -15,35 +16,25 @@ public struct AccountCreationUseCases: Sendable {
         self.resolveEndpoint = resolveEndpoint
     }
 
-    public func loadCertificates(for endpoint: Endpoint, serverTrustPolicy: ServerTrustPolicy) async -> CertificatePreviewState {
-        var state = CertificatePreviewState(isLoading: true)
+    public func loadCertificates(
+        for endpoint: Endpoint,
+        serverTrustPolicy: ServerTrustPolicy,
+        current: CertificatePreview
+    ) async -> CertificatePreview {
+        let resource = current.beginLoading()
         do {
-            let res = try await TLSProbe.inspect(for: endpoint.url, policy: serverTrustPolicy)
-            print("TLSProbe.inspect for \(endpoint.url.absoluteString): \(res)")
-            state.chain = res.chain
-            state.message = res.pinningError?.localizedDescription
-            state.trustStatus = res.trustStatus
+            let result = try await TLSProbe.inspect(for: endpoint.url, policy: serverTrustPolicy)
+            return resource.succeed(CertificateProbeResult(result))
         } catch let error as SSLPinningError {
-            switch error {
-            case .invalidServerTrust(let host):
-                state.chain = []
-                state.message = error.localizedDescription
-            case .fingerprintMismatch(let host, let expected, let presentedChain):
-                state.chain = presentedChain
-                state.message = error.localizedDescription
-            case .unknownHost(let host, let presentedChain):
-                state.chain = presentedChain
-                state.message = error.localizedDescription
-            case .systemTrustFailed(let underlying):
-                state.chain = []
-                state.message = error.localizedDescription
+            if let result = Self.probeResult(from: error) {
+                return resource.succeed(result)
             }
+            return resource.fail(Self.failure(from: error))
+        } catch let error as TLSProbe.Error {
+            return resource.fail(Self.failure(from: error))
         } catch {
-            state.chain = []
-            state.message = error.localizedDescription
+            return resource.fail(.handshakeFailed(description: error.localizedDescription))
         }
-        state.isLoading = false
-        return state
     }
 
     public func validateCredentials(_ request: AccountCredentialsRequest) async throws -> AccountSignInOutcome {
@@ -73,5 +64,39 @@ public struct AccountCreationUseCases: Sendable {
             code: request.code,
             mode: request.mode
         )
+    }
+}
+
+private extension AccountCreationUseCases {
+    static func probeResult(from error: SSLPinningError) -> CertificateProbeResult? {
+        switch error {
+        case .fingerprintMismatch(_, _, let presentedChain),
+             .unknownHost(_, let presentedChain):
+            CertificateProbeResult(chain: presentedChain, trustStatus: nil, pinningError: error)
+        case .invalidServerTrust, .systemTrustFailed:
+            nil
+        }
+    }
+
+    static func failure(from error: SSLPinningError) -> CertificatePreviewFailure {
+        switch error {
+        case .invalidServerTrust(let host):
+            .invalidServerTrust(host: host)
+        case .systemTrustFailed(let underlying):
+            .systemTrustFailed(description: underlying.localizedDescription)
+        case .fingerprintMismatch, .unknownHost:
+            .handshakeFailed(description: error.localizedDescription)
+        }
+    }
+
+    static func failure(from error: TLSProbe.Error) -> CertificatePreviewFailure {
+        switch error {
+        case .notHTTPS:
+            .notHTTPS
+        case .noCertificates(let host):
+            .noCertificates(host: host)
+        case .handshakeFailed(let underlyingError):
+            .handshakeFailed(description: underlyingError.localizedDescription)
+        }
     }
 }

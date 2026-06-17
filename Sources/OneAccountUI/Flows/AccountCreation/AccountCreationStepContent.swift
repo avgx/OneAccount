@@ -26,7 +26,7 @@ struct AccountCreationStepContent: View {
 
         case .serverCertificates:
             ServerCertificatesStep(
-                state: flow.certificatePreviewState,
+                preview: flow.certificatePreview,
                 host: flow.draft.resolvedEndpoint?.url.host ?? "",
                 policy: $flow.draft.serverTrustPolicy,
                 onReload: { probePolicy in

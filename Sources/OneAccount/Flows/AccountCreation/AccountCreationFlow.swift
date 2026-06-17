@@ -9,7 +9,7 @@ public final class AccountCreationFlow: ObservableObject {
     @Published public var endpointState = EndpointInputState()
     @Published public var credentialsState = CredentialsState()
     @Published public var otpState = OTPState()
-    @Published public var certificatePreviewState = CertificatePreviewState()
+    @Published public var certificatePreview: CertificatePreview = .idle
 
     public let endpointWizardMode: EndpointWizardMode
     private let useCases: AccountCreationUseCases
@@ -101,16 +101,19 @@ public final class AccountCreationFlow: ObservableObject {
 
     public func reloadCertificates(probePolicy: ServerTrustPolicy = .system) async {
         guard let endpoint = draft.resolvedEndpoint else {
-            certificatePreviewState = CertificatePreviewState(message: AccountCreationFlowError.missingResolvedEndpoint.localizedDescription)
+            certificatePreview = .failed(.missingEndpoint)
             return
         }
-        let preservedTrustStatus = probePolicy == .system ? nil : certificatePreviewState.trustStatus
-        certificatePreviewState = CertificatePreviewState(isLoading: true)
-        var loaded = await useCases.loadCertificates(for: endpoint, serverTrustPolicy: probePolicy)
+        let preservedTrustStatus = probePolicy == .system ? nil : certificatePreview.trustStatus
+        var loaded = await useCases.loadCertificates(
+            for: endpoint,
+            serverTrustPolicy: probePolicy,
+            current: certificatePreview
+        )
         if let preservedTrustStatus {
-            loaded.trustStatus = preservedTrustStatus
+            loaded = loaded.replacingTrustStatus(preservedTrustStatus)
         }
-        certificatePreviewState = loaded
+        certificatePreview = loaded
     }
 
     public func continueAfterCertificates() {
