@@ -53,7 +53,6 @@ public struct AccountList: View {
     }
 
     private func deleteAccountsAtOffsets(_ offsets: IndexSet) {
-        print("deleteAccountsAtOffsets \(offsets)")
         let ids = offsets.map { accountManager.accounts[$0].id }
         Task { @MainActor in
             if let selected = selectedAccountID, ids.contains(selected) {
