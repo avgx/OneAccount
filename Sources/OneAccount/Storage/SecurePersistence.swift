@@ -66,7 +66,7 @@ final class SecurePersistence: AccountPersistence, @unchecked Sendable {
     func loadAll() async throws -> [AccountRecord] {
         var out: [AccountRecord] = []
         for key in try matchingAccountKeys() {
-            if let record = try loadPayload(accountKey: key) {
+            if let record = try? loadPayload(accountKey: key) {
                 out.append(record)
             }
         }

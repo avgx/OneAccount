@@ -3,8 +3,8 @@ import OneAccount
 
 /// Displays one discovered endpoint candidate.
 @MainActor
-struct SuggestionResultRow: View {
-    let row: SuggestionLoader.Row
+struct ResolvedEndpointRow: View {
+    let row: EndpointLookup.Row
     var didSelect: (DiscoveryCandidate) -> Void
 
     var body: some View {

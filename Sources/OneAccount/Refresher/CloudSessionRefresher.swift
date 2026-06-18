@@ -3,13 +3,20 @@ import HTTP
 import RequestResponse
 import JWTDecode
 import DebugThings
+import SSLPinning
 
 public struct CloudSessionRefresher: SessionRefresher {
     private let baseURL: URL
+    private let serverTrustPolicy: ServerTrustPolicy
     private let logger: (any URLSessionTaskLogger)?
     
-    public init(baseURL: URL, logger: (any URLSessionTaskLogger)? = nil) {
+    public init(
+        baseURL: URL,
+        serverTrustPolicy: ServerTrustPolicy = .system,
+        logger: (any URLSessionTaskLogger)? = nil
+    ) {
         self.baseURL = baseURL
+        self.serverTrustPolicy = serverTrustPolicy
         self.logger = logger
     }
 
@@ -29,6 +36,7 @@ public struct CloudSessionRefresher: SessionRefresher {
         let (client, builder) = BearerRefreshTransport.jsonClientAndBuilder(
             baseURL: baseURL,
             bearerToken: session.refreshToken,
+            serverTrustPolicy: serverTrustPolicy,
             logger: logger
         )
 

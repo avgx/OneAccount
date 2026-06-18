@@ -5,12 +5,12 @@ import OneAccount
 @MainActor
 struct EndpointStep: View {
 
-    @ObservedObject var suggestionLoader: SuggestionLoader
+    @ObservedObject var endpointLookup: EndpointLookup
     @Binding var state: EndpointStepState
     var suggestions: WizardEndpointSuggestions
 
     var onSelectRow: (DiscoveryRowSelection) -> Void
-    var onConnect: () async throws -> Void
+    var onLookUp: () async -> Void
     var onURLChanged: () -> Void
 
     private var isInputEmpty: Bool {
@@ -30,12 +30,12 @@ struct EndpointStep: View {
                     state.message = nil
                     let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
                     if trimmed.isEmpty {
-                        suggestionLoader.scheduleStaticReload(
+                        endpointLookup.scheduleStaticReload(
                             proposedURLs: suggestions.proposedURLs,
                             demoURLs: suggestions.credentialSeedURLs
                         )
                     } else {
-                        suggestionLoader.scheduleReload(rawURL: newValue)
+                        endpointLookup.scheduleReload(rawURL: newValue)
                     }
                 }
         } header: {
@@ -49,39 +49,39 @@ struct EndpointStep: View {
         }
         .onAppear {
             if isInputEmpty {
-                suggestionLoader.scheduleStaticReload(
+                endpointLookup.scheduleStaticReload(
                     proposedURLs: suggestions.proposedURLs,
                     demoURLs: suggestions.credentialSeedURLs
                 )
             } else {
-                suggestionLoader.scheduleReload(rawURL: state.urlText)
+                endpointLookup.scheduleReload(rawURL: state.urlText)
             }
         }
 
         ActionButton(
-            title: state.isResolving ? "connecting" : "connect",
-            isLoading: state.isResolving,
-            isDisabled: state.isResolving || isInputEmpty
+            title: endpointLookup.isDiscovering ? "lookingUp" : "lookUp",
+            isLoading: endpointLookup.isDiscovering,
+            isDisabled: endpointLookup.isDiscovering || isInputEmpty
         ) {
             #if os(iOS)
             hideKeyboard()
             #endif
-            try await onConnect()
+            await onLookUp()
         }
-        .disabled(state.isResolving || isInputEmpty)
+        .disabled(endpointLookup.isDiscovering || isInputEmpty)
 
         if isInputEmpty {
-            staticSuggestions
+            staticPresets
         } else {
-            discoverySuggestions
+            foundEndpoints
         }
     }
 
     @ViewBuilder
-    private var discoverySuggestions: some View {
+    private var foundEndpoints: some View {
         Section {
-            ForEach(suggestionLoader.rows) { row in
-                SuggestionResultRow(row: row) { candidate in
+            ForEach(endpointLookup.rows) { row in
+                ResolvedEndpointRow(row: row) { candidate in
                     onSelectRow(DiscoveryRowSelection(
                         candidate: candidate,
                         seedURL: row.seedURL,
@@ -91,26 +91,28 @@ struct EndpointStep: View {
             }
         } header: {
             HStack {
-                Text("Suggestions")
-                    .shimmering(active: suggestionLoader.isDiscovering && suggestionLoader.rows.isEmpty)
+                Text("Found")
+                    .shimmering(active: endpointLookup.isDiscovering && endpointLookup.rows.isEmpty)
                 Spacer()
                 Button {
-                    suggestionLoader.scheduleReload(rawURL: state.urlText)
+                    Task {
+                        await endpointLookup.reloadNow(rawURL: state.urlText)
+                    }
                 } label: {
                     Image(systemName: "arrow.counterclockwise")
                         .imageScale(.small)
                 }
-                .disabled(suggestionLoader.isDiscovering)
+                .disabled(endpointLookup.isDiscovering)
             }
         }
     }
 
     @ViewBuilder
-    private var staticSuggestions: some View {
+    private var staticPresets: some View {
         if !suggestions.proposedURLs.isEmpty {
             Section {
-                ForEach(suggestionLoader.proposedRows) { row in
-                    SuggestionResultRow(row: row) { candidate in
+                ForEach(endpointLookup.proposedRows) { row in
+                    ResolvedEndpointRow(row: row) { candidate in
                         onSelectRow(DiscoveryRowSelection(
                             candidate: candidate,
                             seedURL: row.seedURL,
@@ -119,15 +121,15 @@ struct EndpointStep: View {
                     }
                 }
             } header: {
-                Text("Suggestions")
-                    .shimmering(active: suggestionLoader.isDiscovering && suggestionLoader.proposedRows.isEmpty)
+                Text("Available")
+                    .shimmering(active: endpointLookup.isDiscovering && endpointLookup.proposedRows.isEmpty)
             }
         }
 
-        if !suggestionLoader.demoRows.isEmpty {
+        if !endpointLookup.demoRows.isEmpty {
             Section {
-                ForEach(suggestionLoader.demoRows) { row in
-                    SuggestionResultRow(row: row) { candidate in
+                ForEach(endpointLookup.demoRows) { row in
+                    ResolvedEndpointRow(row: row) { candidate in
                         onSelectRow(DiscoveryRowSelection(
                             candidate: candidate,
                             seedURL: row.seedURL,
@@ -137,7 +139,7 @@ struct EndpointStep: View {
                 }
             } header: {
                 Text("Demo")
-                    .shimmering(active: suggestionLoader.isDiscovering && suggestionLoader.demoRows.isEmpty)
+                    .shimmering(active: endpointLookup.isDiscovering && endpointLookup.demoRows.isEmpty)
             }
         }
     }

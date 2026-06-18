@@ -53,6 +53,7 @@ let package = Package(
                 .product(name: "Resource", package: "Resource"),
                 .product(name: "URLKit", package: "URLKit"),
                 .product(name: "HTTP", package: "Get"),
+                .product(name: "WS", package: "Get"),
             ]
         ),
         .target(

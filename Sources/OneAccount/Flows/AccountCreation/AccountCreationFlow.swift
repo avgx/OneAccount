@@ -79,8 +79,10 @@ public final class AccountCreationFlow: ObservableObject {
     }
 
     public func validateDemoCredentials(_ request: AccountCredentialsRequest) async -> Bool {
+        var demoRequest = request
+        demoRequest.serverTrustPolicy = .system
         do {
-            let outcome = try await useCases.validateCredentials(request)
+            let outcome = try await useCases.validateCredentials(demoRequest)
             if case .authenticated = outcome {
                 return true
             }
@@ -101,42 +103,6 @@ public final class AccountCreationFlow: ObservableObject {
         }
 
         await transitionAfterEndpointReady()
-    }
-
-    public func connectEndpoint(preferredCandidate: DiscoveryCandidate?) async throws {
-        guard !isEndpointLocked else { return }
-        endpointState.isResolving = true
-        endpointState.message = nil
-        pendingDemoSignIn = false
-        defer { endpointState.isResolving = false }
-
-        do {
-            let resolvedURL: URL
-            let backend: Backend
-
-            if let preferredCandidate {
-                guard let resolvedBackend = preferredCandidate.endpoint.backend else {
-                    throw AccountCreationFlowError.missingResolvedEndpoint
-                }
-                resolvedURL = preferredCandidate.endpoint.url
-                backend = resolvedBackend
-            } else {
-                let resolved = try await useCases.resolveEndpoint(endpointState.urlText)
-                resolvedURL = resolved.url
-                backend = resolved.backend
-            }
-
-            guard EndpointURLInput.matchesResolvedURL(endpointState.urlText, resolved: resolvedURL) else {
-                endpointState.urlText = resolvedURL.absoluteString
-                return
-            }
-
-            draft.resolvedEndpoint = ResolvedEndpoint(url: resolvedURL, backend: backend)
-            await transitionAfterEndpointReady()
-        } catch {
-            endpointState.message = Self.endpointMessage(for: error)
-            throw error
-        }
     }
 
     public func reloadCertificates(probePolicy: ServerTrustPolicy = .system) async {
@@ -162,7 +128,7 @@ public final class AccountCreationFlow: ObservableObject {
         Task { await attemptDemoSignInIfNeeded() }
     }
 
-    public func signIn() async throws {
+    public func signIn(serverTrustPolicy: ServerTrustPolicy? = nil) async throws {
         resetCredentialState()
         guard let endpoint = draft.resolvedEndpoint else {
             credentialsState.message = AccountCreationFlowError.missingResolvedEndpoint.localizedDescription
@@ -177,9 +143,16 @@ public final class AccountCreationFlow: ObservableObject {
         credentialsState.isSigningIn = true
         defer { credentialsState.isSigningIn = false }
 
+        let policy = serverTrustPolicy ?? draft.serverTrustPolicy
+
         do {
             let outcome = try await useCases.validateCredentials(
-                AccountCredentialsRequest(endpoint: endpoint.asEndpoint, user: user, password: draft.password)
+                AccountCredentialsRequest(
+                    endpoint: endpoint.asEndpoint,
+                    user: user,
+                    password: draft.password,
+                    serverTrustPolicy: policy
+                )
             )
             credentialsState.message = nil
             credentialsState.signInOutcomeKnown = true
@@ -222,7 +195,8 @@ public final class AccountCreationFlow: ObservableObject {
                     endpoint: endpoint,
                     user: draft.user.trimmingCharacters(in: .whitespacesAndNewlines),
                     code: code,
-                    mode: otpState.isTotp ? .totp : .otp
+                    mode: otpState.isTotp ? .totp : .otp,
+                    serverTrustPolicy: draft.serverTrustPolicy
                 )
             )
             draft.session = session
@@ -280,7 +254,7 @@ public final class AccountCreationFlow: ObservableObject {
         guard pendingDemoSignIn else { return }
         pendingDemoSignIn = false
         do {
-            try await signIn()
+            try await signIn(serverTrustPolicy: .system)
         } catch {
             // Remain on credentials; credentialsState.message is set by signIn.
         }

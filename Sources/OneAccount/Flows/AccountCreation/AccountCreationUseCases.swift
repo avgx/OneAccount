@@ -46,7 +46,8 @@ public struct AccountCreationUseCases: Sendable {
             url: request.endpoint.url,
             backend: backend,
             user: request.user,
-            password: request.password
+            password: request.password,
+            serverTrustPolicy: request.serverTrustPolicy
         )
 
         switch outcome {
@@ -62,7 +63,8 @@ public struct AccountCreationUseCases: Sendable {
             url: request.endpoint.url,
             user: request.user,
             code: request.code,
-            mode: request.mode
+            mode: request.mode,
+            serverTrustPolicy: request.serverTrustPolicy
         )
     }
 }

@@ -83,7 +83,13 @@ private func runAddAccountWizardHeadlessNetwork(
     #expect(flow.step == .endpoint)
     flow.endpointState.urlText = urlString
 
-    try await flow.connectEndpoint(preferredCandidate: nil)
+    let resolved = try await resolveEndpoint(urlString)
+    await flow.selectDiscoveryRow(DiscoveryRowSelection(
+        candidate: DiscoveryCandidate(
+            endpoint: Endpoint(url: resolved.url, backend: resolved.backend),
+            summary: ""
+        )
+    ))
 
     if flow.step == .serverCertificates {
         await flow.reloadCertificates()

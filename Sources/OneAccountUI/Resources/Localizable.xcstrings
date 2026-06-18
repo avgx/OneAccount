@@ -38,10 +38,7 @@
     "Cancel" : {
 
     },
-    "connect" : {
-
-    },
-    "connecting" : {
+    "Available" : {
 
     },
     "Continue" : {
@@ -138,7 +135,13 @@
         }
       }
     },
-    "Suggestions" : {
+    "Found" : {
+
+    },
+    "lookUp" : {
+
+    },
+    "lookingUp" : {
 
     },
     "System Trust" : {

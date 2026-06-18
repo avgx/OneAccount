@@ -4,28 +4,27 @@ import OneAccount
 @MainActor
 struct AccountCreationStepContent: View {
     @ObservedObject var flow: AccountCreationFlow
-    @ObservedObject var suggestionLoader: SuggestionLoader
+    @ObservedObject var endpointLookup: EndpointLookup
     var suggestions: WizardEndpointSuggestions
 
     var body: some View {
         switch flow.step {
         case .endpoint:
             EndpointStep(
-                suggestionLoader: suggestionLoader,
+                endpointLookup: endpointLookup,
                 state: $flow.endpointState,
                 suggestions: suggestions,
                 onSelectRow: { selection in
                     Task { await flow.selectDiscoveryRow(selection) }
                 },
-                onConnect: {
-                    let preferred = suggestionLoader.rows.first?.candidate
-                    try await flow.connectEndpoint(preferredCandidate: preferred)
+                onLookUp: {
+                    await endpointLookup.lookUpIfNeeded(rawURL: flow.endpointState.urlText)
                 },
                 onURLChanged: {
                     flow.clearResolvedEndpointOnURLChange()
                 }
             )
-            .onDisappear { suggestionLoader.cancelPendingWork() }
+            .onDisappear { endpointLookup.cancelPendingWork() }
 
         case .serverCertificates:
             ServerCertificatesStep(

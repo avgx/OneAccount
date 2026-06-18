@@ -7,7 +7,7 @@ import OneAccount
 public struct AccountCreationWizard: View {
     @ObservedObject private var flow: AccountCreationFlow
     private let suggestions: WizardEndpointSuggestions
-    @StateObject private var suggestionLoader: SuggestionLoader
+    @StateObject private var endpointLookup: EndpointLookup
 
     public init(
         flow: AccountCreationFlow,
@@ -15,7 +15,7 @@ public struct AccountCreationWizard: View {
     ) {
         self.flow = flow
         self.suggestions = suggestions
-        _suggestionLoader = StateObject(wrappedValue: SuggestionLoader(
+        _endpointLookup = StateObject(wrappedValue: EndpointLookup(
             validateDemoCredentials: { request in
                 await flow.validateDemoCredentials(request)
             }
@@ -26,7 +26,7 @@ public struct AccountCreationWizard: View {
         Form {
             AccountCreationStepContent(
                 flow: flow,
-                suggestionLoader: suggestionLoader,
+                endpointLookup: endpointLookup,
                 suggestions: suggestions
             )
         }

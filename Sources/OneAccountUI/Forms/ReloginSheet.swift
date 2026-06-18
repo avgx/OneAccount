@@ -139,7 +139,8 @@ public struct ReloginSheet: View {
                 url: url,
                 backend: backend,
                 user: account.credentials.user,
-                password: password
+                password: password,
+                serverTrustPolicy: account.serverTrustPolicy
             )
             switch outcome {
             case .authenticated(let session):
@@ -178,7 +179,8 @@ public struct ReloginSheet: View {
                 url: account.endpoint.url,
                 user: account.credentials.user,
                 code: otpCode,
-                mode: mode
+                mode: mode,
+                serverTrustPolicy: account.serverTrustPolicy
             )
             try await persistSession(session)
             dismiss()

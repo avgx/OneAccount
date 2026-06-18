@@ -4,9 +4,9 @@ import OneAccount
 import URLKit
 import DebugThings
 
-/// Debounced discovery for the endpoint URL field. Typed input uses ``Web/exploreDiscoveries``; static preset URLs use ``Web/exploreExact``.
+/// Debounced endpoint discovery for the URL field. Typed input uses ``Web/exploreDiscoveries``; static preset URLs use ``Web/exploreExact``.
 @MainActor
-public final class SuggestionLoader: ObservableObject, Loggable {
+public final class EndpointLookup: ObservableObject, Loggable {
 
     public typealias DemoCredentialsValidator = @Sendable (AccountCredentialsRequest) async -> Bool
 
@@ -56,6 +56,7 @@ public final class SuggestionLoader: ObservableObject, Loggable {
 
     private let session: URLSession
     private let validateDemoCredentials: DemoCredentialsValidator?
+    private var exploredInput: String?
     private var generation: Int = 0
     private var debounceTask: Task<Void, Never>?
     private var exploreTask: Task<Void, Never>?
@@ -79,6 +80,23 @@ public final class SuggestionLoader: ObservableObject, Loggable {
             guard !Task.isCancelled else { return }
             await self?.reloadTyped(rawURL: rawURL, generation: requestGeneration)
         }
+    }
+
+    /// Immediate typed explore; cancels debounce and any in-flight typed explore.
+    public func reloadNow(rawURL: String) async {
+        debounceTask?.cancel()
+        debounceTask = nil
+        generation += 1
+        let requestGeneration = generation
+        await reloadTyped(rawURL: rawURL, generation: requestGeneration)
+    }
+
+    /// Look up: ``reloadNow`` only when trimmed input differs from the last started typed explore.
+    public func lookUpIfNeeded(rawURL: String) async {
+        let trimmed = rawURL.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        if trimmed == exploredInput { return }
+        await reloadNow(rawURL: rawURL)
     }
 
     public func scheduleStaticReload(proposedURLs: [URL], demoURLs: [URL]) {
@@ -139,6 +157,7 @@ public final class SuggestionLoader: ObservableObject, Loggable {
 
         guard requestGeneration == generation else { return }
 
+        exploredInput = trimmed
         rows = []
         isDiscovering = true
         logger.info("typed explore start: seeds=\(seeds.count)")
@@ -341,16 +360,16 @@ public final class SuggestionLoader: ObservableObject, Loggable {
 
 /// Collects static rows — one entry per seed result, no dedupe by backend.
 private actor StaticRowCollector {
-    private var rows: [SuggestionLoader.Row] = []
+    private var rows: [EndpointLookup.Row] = []
     private var seenIDs = Set<String>()
 
-    func append(_ newRows: [SuggestionLoader.Row]) {
+    func append(_ newRows: [EndpointLookup.Row]) {
         for row in newRows where seenIDs.insert(row.id).inserted {
             rows.append(row)
         }
     }
 
-    func sortedRows() -> [SuggestionLoader.Row] {
+    func sortedRows() -> [EndpointLookup.Row] {
         rows.sorted { lhs, rhs in
             let lhsCloud = lhs.candidate.endpoint.backend == .cloud
             let rhsCloud = rhs.candidate.endpoint.backend == .cloud
@@ -364,12 +383,12 @@ private actor StaticRowCollector {
 }
 
 private actor DiscoveryMergeState {
-    private var rows: [SuggestionLoader.Row] = []
+    private var rows: [EndpointLookup.Row] = []
     private var backends = Set<OneAccount.Backend>()
     private var stopRequested = false
-    private let source: SuggestionLoader.Row.Source
+    private let source: EndpointLookup.Row.Source
 
-    init(source: SuggestionLoader.Row.Source) {
+    init(source: EndpointLookup.Row.Source) {
         self.source = source
     }
 
@@ -387,7 +406,7 @@ private actor DiscoveryMergeState {
                 endpoint: Endpoint(url: discovery.baseURL, backend: backend),
                 summary: discovery.summary
             )
-            rows = [SuggestionLoader.Row(candidate: candidate, source: source)]
+            rows = [EndpointLookup.Row(candidate: candidate, source: source)]
             backends = [.cloud]
             stopRequested = true
             return true
@@ -399,7 +418,7 @@ private actor DiscoveryMergeState {
             endpoint: Endpoint(url: discovery.baseURL, backend: backend),
             summary: discovery.summary
         )
-        rows.append(SuggestionLoader.Row(candidate: candidate, source: source))
+        rows.append(EndpointLookup.Row(candidate: candidate, source: source))
 
         if backends.count >= 2 {
             stopRequested = true
@@ -408,7 +427,7 @@ private actor DiscoveryMergeState {
         return false
     }
 
-    func sortedRows() -> [SuggestionLoader.Row] {
+    func sortedRows() -> [EndpointLookup.Row] {
         rows.sorted { lhs, rhs in
             let lhsCloud = lhs.candidate.endpoint.backend == .cloud
             let rhsCloud = rhs.candidate.endpoint.backend == .cloud

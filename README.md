@@ -131,7 +131,7 @@ Below is the surface meant for use outside the module. Additional DTOs (Cloud/Ne
 - **`AccountCreationWizardLegacy`**, **`AccountCreationWizardIOS18`**, **`AccountCreationWizardTVOS18`**, **`AccountCreationStepContent`**.
 - Fields: **`URLField`**, **`UsernameField`**, **`PasswordField`**, **`CredentialsField`**, **`OTPField`** / typealias **`OtpField`**.
 - Misc: **`AvatarView`**, **`AccountDetailedLabel`**, **`ActionButton`**, style view modifiers (`urlFieldStyle`, credentials field style).
-- **`SuggestionLoader`** — debounced endpoint suggestions; **`WizardEndpointSuggestions`** — suggestion configuration for samples/apps.
+- **`EndpointLookup`** — debounced endpoint discovery for the URL field; **`WizardEndpointSuggestions`** — preset/demo URL configuration for samples/apps.
 
 ## Adding the dependency
 

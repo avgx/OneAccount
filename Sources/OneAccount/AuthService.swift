@@ -2,6 +2,7 @@ import Foundation
 import HTTP
 import RequestResponse
 import DebugThings
+import SSLPinning
 
 public enum OtpMode: Hashable, Sendable {
     case otp
@@ -141,26 +142,68 @@ public struct AuthService: Sendable {
         self.backendResolver = backendResolver
     }
     
-    public func signIn(url: URL, user: String, password: String) async throws -> SignInOutcome {
+    public func signIn(
+        url: URL,
+        user: String,
+        password: String,
+        serverTrustPolicy: ServerTrustPolicy = .system
+    ) async throws -> SignInOutcome {
         let backendResolved: Backend = try await backendResolver(url)
-        return try await self.signIn(url: url, backend: backendResolved, user: user, password: password)
+        return try await self.signIn(
+            url: url,
+            backend: backendResolved,
+            user: user,
+            password: password,
+            serverTrustPolicy: serverTrustPolicy
+        )
     }
     
-    public func signIn(url: URL, backend: Backend, user: String, password: String) async throws -> SignInOutcome {
+    public func signIn(
+        url: URL,
+        backend: Backend,
+        user: String,
+        password: String,
+        serverTrustPolicy: ServerTrustPolicy = .system
+    ) async throws -> SignInOutcome {
         switch backend {
         case .cloud:
-            return try await signInCloud(baseURL: url, user: user, password: password)
+            return try await signInCloud(
+                baseURL: url,
+                user: user,
+                password: password,
+                serverTrustPolicy: serverTrustPolicy
+            )
         case .next:
-            return try await signInNext(baseURL: url, user: user, password: password)
+            return try await signInNext(
+                baseURL: url,
+                user: user,
+                password: password,
+                serverTrustPolicy: serverTrustPolicy
+            )
         case .nextLegacy, .intl:
-            _ = try await signInBasic(baseURL: url, backend: backend, user: user, password: password)
+            _ = try await signInBasic(
+                baseURL: url,
+                backend: backend,
+                user: user,
+                password: password,
+                serverTrustPolicy: serverTrustPolicy
+            )
             return .authenticated(session: nil)
         }
     }
     
-    public func verifyOtp(url: URL, user: String, code: String, mode: OtpMode) async throws -> BackendSession {
+    public func verifyOtp(
+        url: URL,
+        user: String,
+        code: String,
+        mode: OtpMode,
+        serverTrustPolicy: ServerTrustPolicy = .system
+    ) async throws -> BackendSession {
         let builder = RequestBuilder.json(baseURL: url, encoder: JSONEncoder())
-        let client = HTTPClient(logger: logger ?? NoopURLSessionTaskLogger())
+        let client = HTTPClient(
+            serverTrustPolicy: serverTrustPolicy,
+            logger: logger ?? NoopURLSessionTaskLogger()
+        )
         let request = mode == .totp
             ? CloudApi.totpVerify(.init(email: user, totp: code, clientId: clientId))
             : CloudApi.otpVerify(.init(email: user, otp: code, clientId: clientId))
@@ -178,9 +221,17 @@ public struct AuthService: Sendable {
 }
 
 private extension AuthService {
-    func signInCloud(baseURL: URL, user: String, password: String) async throws -> SignInOutcome {
+    func signInCloud(
+        baseURL: URL,
+        user: String,
+        password: String,
+        serverTrustPolicy: ServerTrustPolicy
+    ) async throws -> SignInOutcome {
         let builder = RequestBuilder.json(baseURL: baseURL, encoder: JSONEncoder())
-        let client = HTTPClient(logger: logger ?? NoopURLSessionTaskLogger())
+        let client = HTTPClient(
+            serverTrustPolicy: serverTrustPolicy,
+            logger: logger ?? NoopURLSessionTaskLogger()
+        )
         do {
             let response = try await client.send(
                 CloudApi.login(.init(email: user, password: password, locale: Locale.current.identifier, clientId: clientId)),
@@ -208,9 +259,17 @@ private extension AuthService {
         }
     }
     
-    func signInNext(baseURL: URL, user: String, password: String) async throws -> SignInOutcome {
+    func signInNext(
+        baseURL: URL,
+        user: String,
+        password: String,
+        serverTrustPolicy: ServerTrustPolicy
+    ) async throws -> SignInOutcome {
         let builder = RequestBuilder.json(baseURL: baseURL, encoder: JSONEncoder())
-        let client = HTTPClient(logger: logger ?? NoopURLSessionTaskLogger())
+        let client = HTTPClient(
+            serverTrustPolicy: serverTrustPolicy,
+            logger: logger ?? NoopURLSessionTaskLogger()
+        )
         let response = try await client.send(
             NextApi.authenticate(user: user, password: password),
             with: builder
@@ -225,10 +284,17 @@ private extension AuthService {
         return .authenticated(session: .next(.init(authToken: token)))
     }
     
-    func signInBasic(baseURL: URL, backend: Backend, user: String, password: String) async throws -> SignInOutcome {
+    func signInBasic(
+        baseURL: URL,
+        backend: Backend,
+        user: String,
+        password: String,
+        serverTrustPolicy: ServerTrustPolicy
+    ) async throws -> SignInOutcome {
         let builder = RequestBuilder.json(baseURL: baseURL, encoder: JSONEncoder())
         
         let client = HTTPClient(
+            serverTrustPolicy: serverTrustPolicy,
             interceptor: FixedAuthInterceptor(authorization: .basic(.init(user: user, password: password))),
             logger: logger ?? NoopURLSessionTaskLogger()
         )
