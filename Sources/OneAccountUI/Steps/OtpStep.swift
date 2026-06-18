@@ -22,7 +22,7 @@ struct OtpStep: View {
         }
 
         ActionButton(
-            title: "Continue",
+            title: "Verify",
             isLoading: state.isVerifying,
             isDisabled: state.code.count < 4 || state.isVerifying
         ) {

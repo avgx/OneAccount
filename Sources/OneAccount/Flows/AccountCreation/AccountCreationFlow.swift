@@ -10,10 +10,12 @@ public final class AccountCreationFlow: ObservableObject {
     @Published public var credentialsState = CredentialsState()
     @Published public var otpState = OTPState()
     @Published public var certificatePreview: CertificatePreview = .idle
+    @Published public var isSavingAccount = false
 
     public let endpointWizardMode: EndpointWizardMode
     private let useCases: AccountCreationUseCases
     private var pendingDemoSignIn = false
+    public var performSave: (() async throws -> Void)?
 
     public init(
         mode: EndpointWizardMode = .free,
@@ -29,13 +31,9 @@ public final class AccountCreationFlow: ObservableObject {
         case .locked(let endpoint):
             initialDraft.resolvedEndpoint = endpoint
             initialDraft.serverTrustPolicy = .system
-            step = Self.shouldPreviewCertificates(for: endpoint.url) ? .serverCertificates : .credentials
+            step = .credentials
         }
         draft = initialDraft
-
-        if step == .serverCertificates {
-            Task { await reloadCertificates() }
-        }
     }
 
     public var isEndpointLocked: Bool {
@@ -64,9 +62,16 @@ public final class AccountCreationFlow: ObservableObject {
     }
 
     public var shouldPreviewCertificates: Bool {
+        guard !isEndpointLocked else { return false }
         guard !pendingDemoSignIn else { return false }
         guard let endpoint = draft.resolvedEndpoint else { return false }
         return Self.shouldPreviewCertificates(for: endpoint.url)
+    }
+
+    public func prepareDraftForSave() {
+        if isEndpointLocked {
+            draft.serverTrustPolicy = .system
+        }
     }
 
     public func resetCredentialState() {
@@ -143,7 +148,7 @@ public final class AccountCreationFlow: ObservableObject {
         credentialsState.isSigningIn = true
         defer { credentialsState.isSigningIn = false }
 
-        let policy = serverTrustPolicy ?? draft.serverTrustPolicy
+        let policy = serverTrustPolicy ?? (isEndpointLocked ? .system : draft.serverTrustPolicy)
 
         do {
             let outcome = try await useCases.validateCredentials(
@@ -196,7 +201,7 @@ public final class AccountCreationFlow: ObservableObject {
                     user: draft.user.trimmingCharacters(in: .whitespacesAndNewlines),
                     code: code,
                     mode: otpState.isTotp ? .totp : .otp,
-                    serverTrustPolicy: draft.serverTrustPolicy
+                    serverTrustPolicy: isEndpointLocked ? .system : draft.serverTrustPolicy
                 )
             )
             draft.session = session

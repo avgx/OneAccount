@@ -47,7 +47,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
         serverTrustPolicy: ServerTrustPolicy = .system,
         clientId: String,
         logger: (any URLSessionTaskLogger)? = nil,
-        suggestions: WizardEndpointSuggestions = .defaultForSample,
+        suggestions: EndpointSuggestions,
         onSave: @escaping (Draft) -> Void
     ) where WizardContent == AccountCreationWizard {
         self.init(
@@ -66,98 +66,71 @@ public struct AddAccountSheet<WizardContent: View>: View {
             .navigationBarTitleDisplayMode(.inline)
             #endif
             .navigationTitle("")
+            .background {
+                WizardSaveWiring(flow: flow, saveInFlight: $saveInFlight, onSave: onSave)
+            }
             .toolbar {
                 ToolbarItem(placement: .principal) {
                     wizardToolbarTitle
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(action: confirmSave) {
-                        Group {
-                            if saveInFlight {
-                                ProgressView()
-                            } else {
-                                Image(systemName: "checkmark")
-                            }
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!flow.canSave || saveInFlight)
-                }
             }
     }
 
+    @ViewBuilder
     private var wizardToolbarTitle: some View {
-        VStack(spacing: 4) {
-            if flow.step != .endpoint, let endpoint = flow.draft.resolvedEndpoint {
-                HStack(spacing: 4) {
-                    Image(systemName: endpoint.backend.icon)
-                    Text(endpoint.url.pretty())
+        if flow.isEndpointLocked {
+            Text("Add Account")
+                .font(.headline)
+                .lineLimit(1)
+        } else {
+            VStack(spacing: 4) {
+                if flow.step != .endpoint, let endpoint = flow.draft.resolvedEndpoint {
+                    HStack(spacing: 4) {
+                        Image(systemName: endpoint.backend.icon)
+                        Text(endpoint.url.pretty())
+                    }
+                } else {
+                    Text("Add Account")
+                        .font(.headline)
+                        .lineLimit(1)
                 }
-            } else {
-                Text("Add Account")
-                    .font(.headline)
-                    .lineLimit(1)                
-            }
-                
-            WizardStepHeader(
-                current: flow.wizardCurrentStepIndex,
-                total: flow.wizardTotalSteps
-            )
-        }
-        .accessibilityElement(children: .combine)
-    }
 
-    @MainActor
-    private func confirmSave() {
-        guard flow.canSave, !saveInFlight else { return }
-        saveInFlight = true
-        onSave(flow.draft)
-        saveInFlight = false
-        dismiss()
-    }
-}
-
-#Preview("Legacy free endpoint") {
-    if #available(iOS 16.0, tvOS 16.0, *) {
-        NavigationStack {
-            AddAccountSheet(clientId: UUID().uuidString) { draft in
-                print("add \(draft.resolvedEndpoint?.url.absoluteString ?? "")")
+                WizardStepHeader(
+                    current: flow.wizardCurrentStepIndex,
+                    total: flow.wizardTotalSteps
+                )
             }
-        }
-    } else {
-        Text("Not available")
-    }
-}
-
-#Preview("Legacy locked URL") {
-    if #available(iOS 16.0, tvOS 16.0, *) {
-        NavigationStack {
-            AddAccountSheet(
-                endpointWizardMode: EndpointWizardMode.locked(
-                    ResolvedEndpoint(url: URL(string: "https://axxonnet.com")!, backend: .cloud)
-                ),
-                clientId: UUID().uuidString
-            ) { draft in
-                print("add locked \(draft.resolvedEndpoint?.url.absoluteString ?? "")")
-            }
-        }
-    } else {
-        Text("Not available")
-    }
-}
-
-#if os(iOS)
-@available(iOS 18.0, tvOS 18.0, *)
-#Preview("iOS 18 explicit wizard") {
-    NavigationStack {
-        AddAccountSheet(
-            clientId: UUID().uuidString,
-            onSave: { draft in
-                print("add ios18 \(draft.resolvedEndpoint?.url.absoluteString ?? "")")
-            }
-        ) { flow in
-            AccountCreationWizard(flow: flow)
+            .accessibilityElement(children: .combine)
         }
     }
 }
-#endif
+
+@MainActor
+private struct WizardSaveWiring: View {
+    @ObservedObject var flow: AccountCreationFlow
+    @Binding var saveInFlight: Bool
+    let onSave: (Draft) -> Void
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        Color.clear
+            .frame(width: 0, height: 0)
+            .onAppear { wireSaveHandler() }
+            .onChange(of: flow.step) { _ in wireSaveHandler() }
+    }
+
+    private func wireSaveHandler() {
+        flow.performSave = {
+            guard flow.canSave, !saveInFlight else { return }
+            saveInFlight = true
+            flow.isSavingAccount = true
+            defer {
+                saveInFlight = false
+                flow.isSavingAccount = false
+            }
+            flow.prepareDraftForSave()
+            onSave(flow.draft)
+            dismiss()
+        }
+    }
+}

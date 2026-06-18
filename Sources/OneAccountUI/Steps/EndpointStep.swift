@@ -1,5 +1,4 @@
 import SwiftUI
-import Shimmer
 import OneAccount
 
 @MainActor
@@ -7,7 +6,7 @@ struct EndpointStep: View {
 
     @ObservedObject var endpointLookup: EndpointLookup
     @Binding var state: EndpointStepState
-    var suggestions: WizardEndpointSuggestions
+    var suggestions: EndpointSuggestions
 
     var onSelectRow: (DiscoveryRowSelection) -> Void
     var onLookUp: () async -> Void
@@ -17,25 +16,40 @@ struct EndpointStep: View {
         state.urlText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
+    private var lookUpButtonTitle: LocalizedStringKey {
+        if endpointLookup.isDiscovering {
+            return "Looking up"
+        }
+        if endpointLookup.canRetry(for: state.urlText) {
+            return "Retry"
+        }
+        return "Look up"
+    }
+
     var body: some View {
         Section {
             TextField("URL of server or cloud", text: $state.urlText)
                 .urlField()
+                #if os(iOS)
+                .submitLabel(.search)
+                #endif
                 .layoutPriority(1000)
                 #if os(iOS) || os(tvOS) || os(visionOS)
                 .ignoresSafeArea(.keyboard, edges: .bottom)
                 #endif
+                .onSubmit {
+                    Task { await performLookUp() }
+                }
                 .onChange(of: state.urlText) { newValue in
                     onURLChanged()
                     state.message = nil
+                    endpointLookup.clearExploredInput()
                     let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
                     if trimmed.isEmpty {
                         endpointLookup.scheduleStaticReload(
                             proposedURLs: suggestions.proposedURLs,
                             demoURLs: suggestions.credentialSeedURLs
                         )
-                    } else {
-                        endpointLookup.scheduleReload(rawURL: newValue)
                     }
                 }
         } header: {
@@ -53,20 +67,15 @@ struct EndpointStep: View {
                     proposedURLs: suggestions.proposedURLs,
                     demoURLs: suggestions.credentialSeedURLs
                 )
-            } else {
-                endpointLookup.scheduleReload(rawURL: state.urlText)
             }
         }
 
         ActionButton(
-            title: endpointLookup.isDiscovering ? "lookingUp" : "lookUp",
+            title: lookUpButtonTitle,
             isLoading: endpointLookup.isDiscovering,
             isDisabled: endpointLookup.isDiscovering || isInputEmpty
         ) {
-            #if os(iOS)
-            hideKeyboard()
-            #endif
-            await onLookUp()
+            await performLookUp()
         }
         .disabled(endpointLookup.isDiscovering || isInputEmpty)
 
@@ -75,6 +84,13 @@ struct EndpointStep: View {
         } else {
             foundEndpoints
         }
+    }
+
+    private func performLookUp() async {
+        #if os(iOS)
+        hideKeyboard()
+        #endif
+        await onLookUp()
     }
 
     @ViewBuilder
@@ -88,21 +104,6 @@ struct EndpointStep: View {
                         isDemo: row.isDemo
                     ))
                 }
-            }
-        } header: {
-            HStack {
-                Text("Found")
-                    .shimmering(active: endpointLookup.isDiscovering && endpointLookup.rows.isEmpty)
-                Spacer()
-                Button {
-                    Task {
-                        await endpointLookup.reloadNow(rawURL: state.urlText)
-                    }
-                } label: {
-                    Image(systemName: "arrow.counterclockwise")
-                        .imageScale(.small)
-                }
-                .disabled(endpointLookup.isDiscovering)
             }
         }
     }
@@ -120,9 +121,6 @@ struct EndpointStep: View {
                         ))
                     }
                 }
-            } header: {
-                Text("Available")
-                    .shimmering(active: endpointLookup.isDiscovering && endpointLookup.proposedRows.isEmpty)
             }
         }
 
@@ -137,9 +135,6 @@ struct EndpointStep: View {
                         ))
                     }
                 }
-            } header: {
-                Text("Demo")
-                    .shimmering(active: endpointLookup.isDiscovering && endpointLookup.demoRows.isEmpty)
             }
         }
     }

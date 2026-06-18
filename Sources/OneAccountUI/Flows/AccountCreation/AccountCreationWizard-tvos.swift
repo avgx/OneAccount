@@ -6,12 +6,12 @@ import OneAccount
 @MainActor
 public struct AccountCreationWizard: View {
     @ObservedObject private var flow: AccountCreationFlow
-    private let suggestions: WizardEndpointSuggestions
+    private let suggestions: EndpointSuggestions
     @StateObject private var endpointLookup: EndpointLookup
 
     public init(
         flow: AccountCreationFlow,
-        suggestions: WizardEndpointSuggestions = .defaultForSample
+        suggestions: EndpointSuggestions
     ) {
         self.flow = flow
         self.suggestions = suggestions

@@ -91,12 +91,17 @@ public final class EndpointLookup: ObservableObject, Loggable {
         await reloadTyped(rawURL: rawURL, generation: requestGeneration)
     }
 
-    /// Look up: ``reloadNow`` only when trimmed input differs from the last started typed explore.
-    public func lookUpIfNeeded(rawURL: String) async {
+    /// Clears typed lookup state after the URL field changes.
+    public func clearExploredInput() {
+        exploredInput = nil
+        rows = []
+    }
+
+    /// True when the last typed explore finished for the current trimmed input.
+    public func canRetry(for rawURL: String) -> Bool {
         let trimmed = rawURL.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else { return }
-        if trimmed == exploredInput { return }
-        await reloadNow(rawURL: rawURL)
+        guard let exploredInput, exploredInput == trimmed else { return false }
+        return !isDiscovering
     }
 
     public func scheduleStaticReload(proposedURLs: [URL], demoURLs: [URL]) {

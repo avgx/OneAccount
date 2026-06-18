@@ -5,6 +5,9 @@ import OneAccount
 struct DoneStep: View {
 
     @Binding var draft: Draft
+    let canSave: Bool
+    let isSaving: Bool
+    var onSave: () async throws -> Void
 
     var body: some View {
         Section {
@@ -16,10 +19,15 @@ struct DoneStep: View {
             }
         } header: {
             Text("Name")
-        } footer: {
-            Text("Review and tap the checkmark in the toolbar to save.")
-                .font(.footnote)
-                .foregroundStyle(.secondary)
         }
+
+        ActionButton(
+            title: "Add account",
+            isLoading: isSaving,
+            isDisabled: !canSave || isSaving
+        ) {
+            try await onSave()
+        }
+        .disabled(!canSave || isSaving)
     }
 }

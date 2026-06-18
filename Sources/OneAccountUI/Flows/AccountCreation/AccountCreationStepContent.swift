@@ -5,7 +5,7 @@ import OneAccount
 struct AccountCreationStepContent: View {
     @ObservedObject var flow: AccountCreationFlow
     @ObservedObject var endpointLookup: EndpointLookup
-    var suggestions: WizardEndpointSuggestions
+    var suggestions: EndpointSuggestions
 
     var body: some View {
         switch flow.step {
@@ -18,7 +18,7 @@ struct AccountCreationStepContent: View {
                     Task { await flow.selectDiscoveryRow(selection) }
                 },
                 onLookUp: {
-                    await endpointLookup.lookUpIfNeeded(rawURL: flow.endpointState.urlText)
+                    await endpointLookup.reloadNow(rawURL: flow.endpointState.urlText)
                 },
                 onURLChanged: {
                     flow.clearResolvedEndpointOnURLChange()
@@ -57,7 +57,15 @@ struct AccountCreationStepContent: View {
             )
 
         case .done:
-            DoneStep(draft: $flow.draft)
+            DoneStep(
+                draft: $flow.draft,
+                canSave: flow.canSave,
+                isSaving: flow.isSavingAccount,
+                onSave: {
+                    guard let performSave = flow.performSave else { return }
+                    try await performSave()
+                }
+            )
         }
     }
 

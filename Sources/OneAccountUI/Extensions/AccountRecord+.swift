@@ -8,10 +8,10 @@ extension AccountRecord {
 
 extension AccountRecord {
     public var title: String {
-        if endpoint.backend == .cloud {
-            return user
-        } else if let name = profile.name, !name.isEmpty {
+        if let name = profile.name, !name.isEmpty {
             return name
+        } else if endpoint.backend == .cloud {
+            return user
         } else if user.contains("@") || user.starts(with: "\\\\") {
             return user
         } else {
@@ -22,14 +22,14 @@ extension AccountRecord {
 
 extension AccountRecord {
     public var subtitle: String {
-        if self.backend == .cloud {
-            return endpoint.url.pretty()
-        } else if let name = profile.name, !name.isEmpty {
-            return "\(user)@\(endpoint.url.pretty())"
-        } else if user.contains("@") || user.starts(with: "\\\\")  {
-            return endpoint.url.pretty()
+        if let name = profile.name, !name.isEmpty {
+            if self.backend == .cloud {
+                return "\(endpoint.url.pretty()) / \(user)"
+            } else {
+                return "\(user)@\(endpoint.url.pretty())"
+            }
         } else {
-            return ""
+            return endpoint.url.pretty()
         }
     }
 }

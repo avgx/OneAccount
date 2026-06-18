@@ -38,9 +38,6 @@
     "Cancel" : {
 
     },
-    "Available" : {
-
-    },
     "Continue" : {
 
     },
@@ -48,9 +45,6 @@
 
     },
     "Credentials" : {
-
-    },
-    "Demo" : {
 
     },
     "Enter 6-digit code" : {
@@ -67,6 +61,12 @@
     },
     "Key" : {
       "extractionState" : "manual"
+    },
+    "Look up" : {
+
+    },
+    "Looking up" : {
+
     },
     "Name" : {
 
@@ -107,9 +107,6 @@
     "Retry" : {
 
     },
-    "Review and tap the checkmark in the toolbar to save." : {
-
-    },
     "Self-signed" : {
 
     },
@@ -134,15 +131,6 @@
           }
         }
       }
-    },
-    "Found" : {
-
-    },
-    "lookUp" : {
-
-    },
-    "lookingUp" : {
-
     },
     "System Trust" : {
 
