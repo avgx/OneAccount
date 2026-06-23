@@ -25,7 +25,6 @@ let package = Package(
         ),
     ],
     dependencies: [
-        .package(path: "../OneDiscovery"),
         .package(url: "https://github.com/auth0/JWTDecode.swift", from: "4.0.0"),
         .package(url: "https://github.com/avgx/SSLPinning.git", from: "2.0.0"),
         .package(url: "https://github.com/avgx/TLSDiagnostics.git", from: "1.0.1"),
@@ -43,7 +42,6 @@ let package = Package(
         .target(
             name: "OneAccount",
             dependencies: [
-                .product(name: "OneDiscovery", package: "OneDiscovery"),
                 .product(name: "JWTDecode", package: "JWTDecode.swift"),
                 .product(name: "RequestResponse", package: "RequestResponse"),
                 .product(name: "EncodeDecode", package: "EncodeDecode"),
@@ -60,7 +58,6 @@ let package = Package(
             name: "OneAccountUI",
             dependencies: [
                 "OneAccount",
-                .product(name: "OneDiscovery", package: "OneDiscovery"),
                 .product(name: "JWTDecode", package: "JWTDecode.swift"),
                 .product(name: "RequestResponse", package: "RequestResponse"),
                 .product(name: "EncodeDecode", package: "EncodeDecode"),
@@ -80,7 +77,6 @@ let package = Package(
             dependencies: [
                 "OneAccount",
                 "OneAccountUI",
-                .product(name: "OneDiscovery", package: "OneDiscovery"),
                 .product(name: "JWTDecode", package: "JWTDecode.swift"),
                 .product(name: "RequestResponse", package: "RequestResponse"),
                 .product(name: "EncodeDecode", package: "EncodeDecode"),

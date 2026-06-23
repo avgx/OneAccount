@@ -6,14 +6,9 @@ import Resource
 
 public struct AccountCreationUseCases: Sendable {
     public var authService: AuthService
-    public var resolveEndpoint: @Sendable (String) async throws -> ResolvedEndpoint
-    
-    public init(
-        authService: AuthService,
-        resolveEndpoint: @Sendable @escaping (String) async throws -> ResolvedEndpoint
-    ) {
+
+    public init(authService: AuthService) {
         self.authService = authService
-        self.resolveEndpoint = resolveEndpoint
     }
 
     public func loadCertificates(

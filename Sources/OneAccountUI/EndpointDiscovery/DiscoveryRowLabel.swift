@@ -27,9 +27,17 @@ struct DiscoveryRowLabel: View {
     }
 }
 
-fileprivate let previewCloud = DiscoveryCandidate(endpoint: Endpoint(url: URL(string: "https://example.com")!, backend: .cloud), summary: "some backend")
+fileprivate let previewCloud = DiscoveryCandidate(
+    endpoint: Endpoint(url: URL(string: "https://example.com")!, backend: .cloud),
+    name: "ITV Cloud",
+    summary: "release/3.26 build 9"
+)
 
-fileprivate let previewUnknownBackend = DiscoveryCandidate(endpoint: Endpoint(url: URL(string: "https://example.com")!, backend: nil), summary: "some other backend")
+fileprivate let previewUnknownBackend = DiscoveryCandidate(
+    endpoint: Endpoint(url: URL(string: "https://example.com")!, backend: nil),
+    name: "Unknown",
+    summary: "some other backend"
+)
 
 #Preview {
     VStack(alignment: .leading) {

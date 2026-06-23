@@ -1,10 +1,9 @@
 import Foundation
-import OneDiscovery
 import OneAccount
 import URLKit
 import DebugThings
 
-/// Debounced endpoint discovery for the URL field. Typed input uses ``Web/exploreDiscoveries``; static preset URLs use ``Web/exploreExact``.
+/// Debounced endpoint discovery for the URL field.
 @MainActor
 public final class EndpointLookup: ObservableObject, Loggable {
 
@@ -54,6 +53,7 @@ public final class EndpointLookup: ObservableObject, Loggable {
     @Published private(set) public var demoRows: [Row] = []
     @Published private(set) public var isDiscovering = false
 
+    private let discovery: DiscoveryClient
     private let session: URLSession
     private let validateDemoCredentials: DemoCredentialsValidator?
     private var exploredInput: String?
@@ -62,9 +62,11 @@ public final class EndpointLookup: ObservableObject, Loggable {
     private var exploreTask: Task<Void, Never>?
 
     public init(
+        discovery: DiscoveryClient,
         session: URLSession? = nil,
         validateDemoCredentials: DemoCredentialsValidator? = nil
     ) {
+        self.discovery = discovery
         self.session = session ?? DiscoveryURLSession.make()
         self.validateDemoCredentials = validateDemoCredentials
     }
@@ -257,22 +259,19 @@ public final class EndpointLookup: ObservableObject, Loggable {
         let configuredURL = seedURL.removingCredentials()
         logger.info("static seed probe start: \(configuredURL.absoluteString)")
 
-        let discovery: DiscoveryResult
+        let discovered: DiscoveredEndpoint
         do {
-            discovery = try await Web.exploreExact(url: configuredURL, session: session)
+            discovered = try await discovery.exploreExact(configuredURL, session, discovery.policy)
         } catch {
             logger.info("static seed probe failed: \(configuredURL.absoluteString)")
             return []
         }
 
         guard requestGeneration == generation, !Task.isCancelled else { return [] }
-        guard let backend = OneAccount.Backend(rawValue: discovery.backend.rawValue) else { return [] }
+        guard discovery.policy.allows(discovered.backend) else { return [] }
 
-        let candidate = DiscoveryCandidate(
-            endpoint: Endpoint(url: configuredURL, backend: backend),
-            summary: discovery.summary
-        )
-        logger.info("static seed probe finished: \(configuredURL.absoluteString) backend=\(backend.rawValue)")
+        let candidate = Self.candidate(from: discovered, url: configuredURL)
+        logger.info("static seed probe finished: \(configuredURL.absoluteString) backend=\(discovered.backend.rawValue)")
         return [Row(candidate: candidate, source: source)]
     }
 
@@ -288,7 +287,7 @@ public final class EndpointLookup: ObservableObject, Loggable {
         }
 
         let deadline = DispatchTime.now().uptimeNanoseconds + Self.discoveryBudgetNanoseconds
-        let merge = DiscoveryMergeState(source: source)
+        let merge = DiscoveryMergeState(source: source, policy: discovery.policy)
 
         await withTaskGroup(of: Bool.self) { group in
             for seed in seeds {
@@ -298,9 +297,9 @@ public final class EndpointLookup: ObservableObject, Loggable {
                     if await merge.shouldStop { return false }
 
                     self.logger.info("typed seed explore start: \(seed.absoluteString)")
-                    let discoveries: [DiscoveryResult]
+                    let discoveries: [DiscoveredEndpoint]
                     do {
-                        discoveries = try await Web.exploreDiscoveries(url: seed, session: session)
+                        discoveries = try await self.discovery.exploreDiscoveries(seed, session, self.discovery.policy)
                     } catch {
                         self.logger.info("typed seed explore failed: \(seed.absoluteString)")
                         return false
@@ -308,7 +307,7 @@ public final class EndpointLookup: ObservableObject, Loggable {
 
                     self.logger.info("typed seed explore finished: \(seed.absoluteString) count=\(discoveries.count)")
 
-                    for discovery in discoveries {
+                    for discovery in discoveries where self.discovery.policy.allows(discovery.backend) {
                         guard !Task.isCancelled else { return true }
                         let stop = await merge.absorb(discovery)
                         let currentRows = await merge.sortedRows()
@@ -361,6 +360,14 @@ public final class EndpointLookup: ObservableObject, Loggable {
         logger.info("demo credential check failed: \(redacted)")
         return false
     }
+
+    private static func candidate(from discovery: DiscoveredEndpoint, url: URL) -> DiscoveryCandidate {
+        DiscoveryCandidate(
+            endpoint: Endpoint(url: url, backend: discovery.backend),
+            name: discovery.name,
+            summary: discovery.summary
+        )
+    }
 }
 
 /// Collects static rows — one entry per seed result, no dedupe by backend.
@@ -389,26 +396,26 @@ private actor StaticRowCollector {
 
 private actor DiscoveryMergeState {
     private var rows: [EndpointLookup.Row] = []
-    private var backends = Set<OneAccount.Backend>()
+    private var backends = Set<Backend>()
     private var stopRequested = false
     private let source: EndpointLookup.Row.Source
+    private let policy: DiscoveryPolicy
 
-    init(source: EndpointLookup.Row.Source) {
+    init(source: EndpointLookup.Row.Source, policy: DiscoveryPolicy) {
         self.source = source
+        self.policy = policy
     }
 
     var shouldStop: Bool { stopRequested }
 
-    func absorb(_ discovery: DiscoveryResult) -> Bool {
+    func absorb(_ discovery: DiscoveredEndpoint) -> Bool {
         if stopRequested { return true }
+        guard policy.allows(discovery.backend) else { return false }
 
-        guard let backend = OneAccount.Backend(rawValue: discovery.backend.rawValue) else {
-            return false
-        }
-
-        if backend == .cloud {
+        if discovery.backend == .cloud {
             let candidate = DiscoveryCandidate(
-                endpoint: Endpoint(url: discovery.baseURL, backend: backend),
+                endpoint: Endpoint(url: discovery.url, backend: discovery.backend),
+                name: discovery.name,
                 summary: discovery.summary
             )
             rows = [EndpointLookup.Row(candidate: candidate, source: source)]
@@ -417,10 +424,11 @@ private actor DiscoveryMergeState {
             return true
         }
 
-        guard backends.insert(backend).inserted else { return false }
+        guard backends.insert(discovery.backend).inserted else { return false }
 
         let candidate = DiscoveryCandidate(
-            endpoint: Endpoint(url: discovery.baseURL, backend: backend),
+            endpoint: Endpoint(url: discovery.url, backend: discovery.backend),
+            name: discovery.name,
             summary: discovery.summary
         )
         rows.append(EndpointLookup.Row(candidate: candidate, source: source))

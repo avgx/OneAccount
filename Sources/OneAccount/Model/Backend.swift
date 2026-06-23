@@ -1,7 +1,7 @@
 import Foundation
 
 /// Backend type
-public enum Backend: String, Codable, Equatable, Sendable {
+public enum Backend: String, Codable, Equatable, Sendable, CaseIterable {
     /// Cloud with access / refresh (needs session with long living tokens with refresh by refreshToken)
     case cloud
     /// Next with bearer auth (needs session with short living token with refresh by valid token)

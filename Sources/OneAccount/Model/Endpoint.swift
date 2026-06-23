@@ -17,9 +17,11 @@ extension Endpoint: Identifiable {
 public struct ResolvedEndpoint: Equatable, Sendable {
     public var url: URL
     public var backend: Backend
+    public var name: String?
 
-    public init(url: URL, backend: Backend) {
+    public init(url: URL, backend: Backend, name: String? = nil) {
         self.url = url
         self.backend = backend
+        self.name = name
     }
 }

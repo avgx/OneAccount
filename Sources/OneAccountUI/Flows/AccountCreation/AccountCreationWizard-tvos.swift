@@ -11,15 +11,19 @@ public struct AccountCreationWizard: View {
 
     public init(
         flow: AccountCreationFlow,
+        discovery: DiscoveryClient?,
         suggestions: EndpointSuggestions
     ) {
         self.flow = flow
         self.suggestions = suggestions
-        _endpointLookup = StateObject(wrappedValue: EndpointLookup(
-            validateDemoCredentials: { request in
-                await flow.validateDemoCredentials(request)
-            }
-        ))
+        _endpointLookup = StateObject(
+            wrappedValue: EndpointLookup(
+                discovery: discovery ?? DiscoveryClient.noop,
+                validateDemoCredentials: { request in
+                    await flow.validateDemoCredentials(request)
+                }
+            )
+        )
     }
 
     public var body: some View {

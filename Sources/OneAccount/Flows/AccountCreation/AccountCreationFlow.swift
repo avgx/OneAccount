@@ -238,7 +238,11 @@ public final class AccountCreationFlow: ObservableObject {
             endpointState.urlText = candidate.endpoint.url.absoluteString
         }
 
-        draft.resolvedEndpoint = ResolvedEndpoint(url: candidate.endpoint.url, backend: backend)
+        draft.resolvedEndpoint = ResolvedEndpoint(
+            url: candidate.endpoint.url,
+            backend: backend,
+            name: candidate.name
+        )
     }
 
     private func transitionAfterEndpointReady() async {

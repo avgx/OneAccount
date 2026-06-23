@@ -3,12 +3,6 @@ import OneAccount
 import SSLPinning
 import DebugThings
 
-fileprivate func resolveEndpoint(_ input: String) async throws -> ResolvedEndpoint {
-    let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-    let result = try await WizardEndpointDiscovery.resolveEndpoint(trimmedURL: trimmed)
-    return ResolvedEndpoint(url: result.url, backend: result.backend)
-}
-
 public struct AddAccountSheet<WizardContent: View>: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var flow: AccountCreationFlow
@@ -17,15 +11,18 @@ public struct AddAccountSheet<WizardContent: View>: View {
     private let content: (AccountCreationFlow) -> WizardContent
     public let onSave: (Draft) -> Void
 
-    
-    
     public init(
         endpointWizardMode: EndpointWizardMode = .free,
+        discovery: DiscoveryClient? = nil,
         clientId: String,
         logger: (any URLSessionTaskLogger)? = nil,
         onSave: @escaping (Draft) -> Void,
         @ViewBuilder content: @escaping (AccountCreationFlow) -> WizardContent
     ) {
+        if case .free = endpointWizardMode {
+            precondition(discovery != nil, "discovery is required when endpointWizardMode is .free")
+        }
+
         self.onSave = onSave
         self.content = content
         let auth = AuthService(clientId: clientId, logger: logger) { _ in
@@ -34,16 +31,14 @@ public struct AddAccountSheet<WizardContent: View>: View {
         _flow = StateObject(
             wrappedValue: AccountCreationFlow(
                 mode: endpointWizardMode,
-                useCases: AccountCreationUseCases(
-                    authService: auth,
-                    resolveEndpoint: resolveEndpoint
-                )
+                useCases: AccountCreationUseCases(authService: auth)
             )
         )
     }
 
     public init(
         endpointWizardMode: EndpointWizardMode = .free,
+        discovery: DiscoveryClient? = nil,
         serverTrustPolicy: ServerTrustPolicy = .system,
         clientId: String,
         logger: (any URLSessionTaskLogger)? = nil,
@@ -52,11 +47,12 @@ public struct AddAccountSheet<WizardContent: View>: View {
     ) where WizardContent == AccountCreationWizard {
         self.init(
             endpointWizardMode: endpointWizardMode,
+            discovery: discovery,
             clientId: clientId,
             logger: logger,
             onSave: onSave
         ) { flow in
-            AccountCreationWizard(flow: flow, suggestions: suggestions)
+            AccountCreationWizard(flow: flow, discovery: discovery, suggestions: suggestions)
         }
     }
 

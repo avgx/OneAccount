@@ -54,14 +54,18 @@ private enum WizardIntegrationProfile {
     case nextLegacy
     case cloud
     case cloudTotp
+
+    var backend: Backend {
+        switch self {
+        case .next: .next
+        case .intl: .intl
+        case .nextLegacy: .nextLegacy
+        case .cloud, .cloudTotp: .cloud
+        }
+    }
 }
 
-fileprivate func resolveEndpoint(_ input: String) async throws -> ResolvedEndpoint {
-    let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
-    let result = try await WizardEndpointDiscovery.resolveEndpoint(trimmedURL: trimmed)
-    return ResolvedEndpoint(url: result.url, backend: result.backend)
-}
-
+/// Headless wizard: endpoint is taken from env (URL + profile backend), no network discovery.
 @MainActor
 private func runAddAccountWizardHeadlessNetwork(
     profile: WizardIntegrationProfile,
@@ -71,22 +75,27 @@ private func runAddAccountWizardHeadlessNetwork(
     totpSecretB32: String?,
     clientIdPrefix: String
 ) async throws {
+    guard let url = URL(string: urlString.trimmingCharacters(in: .whitespacesAndNewlines)) else {
+        Issue.record("Invalid URL in test configuration.")
+        return
+    }
+
     let clientId = "\(clientIdPrefix).\(UUID().uuidString)"
     let auth = AuthService(clientId: clientId) { _ in
         throw AuthServiceError.unsupportedBackend
     }
     let flow = AccountCreationFlow(
         mode: .free,
-        useCases: AccountCreationUseCases(authService: auth, resolveEndpoint: resolveEndpoint)
+        useCases: AccountCreationUseCases(authService: auth)
     )
 
     #expect(flow.step == .endpoint)
     flow.endpointState.urlText = urlString
 
-    let resolved = try await resolveEndpoint(urlString)
     await flow.selectDiscoveryRow(DiscoveryRowSelection(
         candidate: DiscoveryCandidate(
-            endpoint: Endpoint(url: resolved.url, backend: resolved.backend),
+            endpoint: Endpoint(url: url, backend: profile.backend),
+            name: "",
             summary: ""
         )
     ))
@@ -141,8 +150,7 @@ private func runAddAccountWizardHeadlessNetwork(
     }
 }
 
-/// Requires: `CLIENT_ID_PREFIX`, `NEXT_URL`, `NEXT_USER`, `NEXT_PASSWORD`
-/// Headless add-account wizard: real discovery, real auth, in-memory ``AccountStore``.
+/// Requires: `CLIENT_ID_PREFIX`, `NEXT_URL`, `NEXT_USER`, `NEXT_PASSWORD` (canonical Next base URL in env).
 @Test @MainActor
 func addAccountWizard_headlessNetwork_next() async throws {
     let env = DotEnv.merged
