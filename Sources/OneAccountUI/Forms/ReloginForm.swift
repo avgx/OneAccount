@@ -5,7 +5,7 @@ import ButtonKit
 
 /// Re-authenticate a stored cloud or Next account and persist new bearer tokens.
 @MainActor
-public struct ReloginSheet: View {
+public struct ReloginForm: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var accountManager: AccountManager
     @EnvironmentObject private var currentAccount: CurrentAccount
@@ -38,77 +38,78 @@ public struct ReloginSheet: View {
 
     public var body: some View {
         Form {
-            Section {
-                LabeledRow("URL", systemImage: "link") {
-                    Text(account.endpoint.url.absoluteString)
-                        .font(.caption)
-                }
-                if let b = account.endpoint.backend {
-                    LabeledRow("Backend", systemImage: "server.rack", value: b.rawValue)
-                }
-                LabeledRow("User", systemImage: "person") {
-                    Text(account.credentials.user)
-                }
-            } header: {
-                Text("Account")
-            }
-
             if otpModes == nil {
-                Section {
-                    SecureField("Password", text: $password)
-                } header: {
-                    Text("Credentials")
-                } footer: {
-                    Text("Enter your password to obtain new session tokens.")
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                }
-
-                Section {
-                    AsyncButton(action: signIn) {
-                        HStack {
-                            Spacer()
-                            if working {
-                                ProgressView()
-                            } else {
-                                Text("Sign in")
-                            }
-                            Spacer()
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(working || password.isEmpty)
-                }
+                credentialsStep
             } else {
-                OTPField(code: $otpCode, isTotp: $isTotp, canTotp: otpModes?.contains(.totp) ?? false)
-
-                Section {
-                    AsyncButton(action: verifyOtp) {
-                        HStack {
-                            Spacer()
-                            if working {
-                                ProgressView()
-                            } else {
-                                Text("Verify")
-                            }
-                            Spacer()
-                        }
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(working || otpCode.count < 4)
-                }
+                otpStep
             }
-        }
-        .alert("Error", isPresented: Binding(get: { errorMessage != nil }, set: { if !$0 { errorMessage = nil } })) {
-            Button("OK", role: .cancel) { errorMessage = nil }
-        } message: {
-            Text(errorMessage ?? "")
         }
         .onAppear {
             currentAccount.clearReloginPrompt()
         }
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                reloginToolbarTitle
+            }
+        }
+    }
+    
+    @ViewBuilder
+    var credentialsStep: some View {
+        Section {
+            UsernameField(text: .constant(account.credentials.user))
+                .foregroundStyle(.secondary)
+                .disabled(true)
+            
+            PasswordField(text: $password)
+                .onChange(of: password) { _ in
+                    resetLocalSignInState()
+                }
+        } header: {
+            Text("Credentials")
+        } footer: {
+            if let errorMessage, !errorMessage.isEmpty {
+                Text(errorMessage)
+                    .foregroundStyle(.red)
+            } else {
+                Text("Enter your password to obtain new session.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+        }
+
+        ActionButton(
+            title: "Sign in",
+            isDisabled: working || password.isEmpty,
+            action: signIn
+        )
+    }
+    
+    @ViewBuilder
+    var otpStep: some View {
+        OTPField(code: $otpCode, isTotp: $isTotp, canTotp: otpModes?.contains(.totp) ?? false)
+
+        ActionButton(
+            title: "Verify",
+            isDisabled: working || otpCode.count < 4,
+            action: verifyOtp
+        )
     }
 
+    @ViewBuilder
+    private var reloginToolbarTitle: some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                Image(systemName: account.endpoint.backend?.icon ?? "questionmark")
+                Text(account.endpoint.url.pretty())
+            }
+        }
+    }
+    
+    private func resetLocalSignInState() {
+        errorMessage = nil
+    }
+    
     private func signIn() async {
         guard let backend = account.endpoint.backend else {
             errorMessage = AuthServiceError.unsupportedBackend.localizedDescription
@@ -128,11 +129,12 @@ public struct ReloginSheet: View {
             )
             switch outcome {
             case .authenticated(let session):
-                guard let session else {
-                    errorMessage = AuthServiceError.noTokens.localizedDescription
-                    return
+                if let session {
+                    try await persistSession(session)
+                } else {
+                    try await persistPassword(password)
                 }
-                try await persistSession(session)
+                
                 dismiss()
             case .needsOtp(let modes):
                 guard !modes.isEmpty else {
@@ -144,7 +146,7 @@ public struct ReloginSheet: View {
                 otpCode = ""
             }
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = ErrorHelper.connectionFailureMessage(for: error)
         }
     }
 
@@ -169,12 +171,20 @@ public struct ReloginSheet: View {
             try await persistSession(session)
             dismiss()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = ErrorHelper.connectionFailureMessage(for: error)
         }
     }
 
     private func persistSession(_ session: BackendSession?) async throws {
         try await accountManager.store.updateSession(accountID: account.id, session: session)
+        if currentAccount.selectedId == account.id {
+            await currentAccount.selectAccount(id: account.id)
+        }
+        try await accountManager.refresh()
+    }
+    
+    private func persistPassword(_ password: String) async throws {
+        try await accountManager.store.updatePassword(accountID: account.id, password: password)
         if currentAccount.selectedId == account.id {
             await currentAccount.selectAccount(id: account.id)
         }

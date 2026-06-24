@@ -41,11 +41,28 @@ public struct AccountList: View {
                     }
                 }
                 .buttonStyle(.plain)
-                .allowsHitTesting(!isEditing)
+                .allowsHitTesting(!isEditing)                
             }
             .onDelete(perform: deleteAccountsAtOffsets)
         }
         .navigationTitle("Accounts")
+    }
+    
+    private func dontCommitInvalidateTestOnly(_ id: AccountRecord.ID) {
+        Task { @MainActor in
+            do {
+                guard let record = accountManager.accounts.first(where: { $0.id == id }) else { return }
+                if record.session != nil {
+                    try await accountManager.store.updateSession(accountID: id, session: nil)
+                } else {
+                    try await accountManager.store.updatePassword(accountID: id, password: "123456")
+                }
+                try await accountManager.refresh()
+            } catch {
+                //TODO: show warning
+                return
+            }
+        }
     }
 
     private func deleteAccountsAtOffsets(_ offsets: IndexSet) {

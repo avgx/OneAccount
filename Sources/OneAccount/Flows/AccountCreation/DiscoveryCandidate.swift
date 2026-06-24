@@ -16,7 +16,7 @@ public struct DiscoveryCandidate: Identifiable, Equatable, Sendable {
     }
 
     public var rowTitle: String {
-        endpoint.url.removingCredentials().pretty()
+        endpoint.url.removingCredentials().removingFragment().pretty()
     }
 
     public var rowDetail: String {

@@ -3,7 +3,7 @@ import OneAccount
 import SSLPinning
 import DebugThings
 
-public struct AddAccountSheet<WizardContent: View>: View {
+public struct AddAccountWizard<WizardContent: View>: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var flow: AccountCreationFlow
     @State private var saveInFlight = false
@@ -71,7 +71,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
     @ViewBuilder
     private var wizardToolbarTitle: some View {
         if flow.isEndpointLocked {
-            Text("Add Account")
+            Text("Add account")
                 .font(.headline)
                 .lineLimit(1)
         } else {
@@ -82,7 +82,7 @@ public struct AddAccountSheet<WizardContent: View>: View {
                         Text(endpoint.url.pretty())
                     }
                 } else {
-                    Text("Add Account")
+                    Text("Add account")
                         .font(.headline)
                         .lineLimit(1)
                 }

@@ -14,9 +14,6 @@
         }
       }
     },
-    "Account" : {
-
-    },
     "accounts" : {
 
     },
@@ -24,12 +21,6 @@
 
     },
     "Add account" : {
-
-    },
-    "Add Account" : {
-
-    },
-    "Backend" : {
 
     },
     "Code" : {
@@ -53,10 +44,10 @@
     "Enter 6-digit code" : {
 
     },
-    "Enter your password to obtain new session tokens." : {
+    "Enter your password to obtain new session." : {
 
     },
-    "Error" : {
+    "Invalidate password/session" : {
 
     },
     "Issuer" : {
@@ -77,13 +68,7 @@
     "Not trusted by system" : {
 
     },
-    "OK" : {
-
-    },
     "password" : {
-
-    },
-    "Password" : {
 
     },
     "Pinned Certificates" : {
@@ -116,15 +101,8 @@
     "SPKI" : {
 
     },
-    "Step %lld of %lld" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "new",
-            "value" : "Step %1$lld of %2$lld"
-          }
-        }
-      }
+    "Step %lld" : {
+
     },
     "System Trust" : {
 
@@ -147,16 +125,10 @@
     "url" : {
 
     },
-    "URL" : {
-
-    },
     "URL of server or cloud" : {
 
     },
     "user" : {
-
-    },
-    "User" : {
 
     },
     "Valid" : {

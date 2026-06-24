@@ -256,7 +256,7 @@ public final class EndpointLookup: ObservableObject, Loggable {
         guard requestGeneration == generation, !Task.isCancelled else { return [] }
         guard DispatchTime.now().uptimeNanoseconds <= deadline else { return [] }
 
-        let configuredURL = seedURL.removingCredentials()
+        let configuredURL = seedURL.removingCredentials().removingFragment()
         logger.info("static seed probe start: \(configuredURL.absoluteString)")
 
         let discovered: DiscoveredEndpoint
@@ -346,7 +346,7 @@ public final class EndpointLookup: ObservableObject, Loggable {
               let password = components.password
         else { return false }
 
-        let redacted = seedURL.removingCredentials().absoluteString
+        let redacted = seedURL.removingCredentials().removingFragment().absoluteString
         let request = AccountCredentialsRequest(
             endpoint: row.candidate.endpoint,
             user: user,

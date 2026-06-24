@@ -31,7 +31,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-log.git", from: "1.10.1"),
         .package(url: "https://github.com/avgx/RequestResponse.git", from: "2.0.0"),
         .package(url: "https://github.com/avgx/EncodeDecode.git", from: "1.0.2"),
-        .package(url: "https://github.com/avgx/URLKit.git", from: "1.0.0"),
+        .package(url: "https://github.com/avgx/URLKit.git", from: "1.0.2"),
         .package(url: "https://github.com/avgx/DebugThings.git", from: "2.0.0"),
         .package(url: "https://github.com/avgx/Resource.git", from: "1.0.0"),
         .package(url: "https://github.com/avgx/Get.git", from: "6.1.0"),

@@ -233,10 +233,11 @@ public final class AccountCreationFlow: ObservableObject {
         }
 
         draft.resolvedEndpoint = ResolvedEndpoint(
-            url: candidate.endpoint.url,
+            url: candidate.endpoint.url.removingCredentials().removingFragment(),
             backend: backend,
             name: candidate.name
         )
+        draft.displayName = URLComponents(url: candidate.endpoint.url, resolvingAgainstBaseURL: false)?.fragment ?? ""
     }
 
     private func transitionAfterEndpointReady() async {

@@ -21,7 +21,6 @@ public struct CloudSessionRefresher: SessionRefresher {
     }
 
     public func refresh(_ current: BackendSession?) async throws -> BackendSession {
-        print(#function)
         guard case .cloud(let session)? = current else {
             throw URLError(.userAuthenticationRequired)
         }
