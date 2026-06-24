@@ -1,8 +1,6 @@
-#if os(tvOS)
 import SwiftUI
 import OneAccount
 
-@available(tvOS 18.0, *)
 @MainActor
 public struct AccountCreationWizard: View {
     @ObservedObject private var flow: AccountCreationFlow
@@ -36,4 +34,3 @@ public struct AccountCreationWizard: View {
         }
     }
 }
-#endif

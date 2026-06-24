@@ -4,9 +4,6 @@
     "" : {
 
     },
-    "%@" : {
-
-    },
     "%@ → %@" : {
       "localizations" : {
         "en" : {
@@ -35,7 +32,10 @@
     "Backend" : {
 
     },
-    "Cancel" : {
+    "Code" : {
+
+    },
+    "Code Type" : {
 
     },
     "Continue" : {
@@ -45,6 +45,9 @@
 
     },
     "Credentials" : {
+
+    },
+    "Email" : {
 
     },
     "Enter 6-digit code" : {
@@ -65,9 +68,6 @@
     "Look up" : {
 
     },
-    "Looking up" : {
-
-    },
     "Name" : {
 
     },
@@ -78,12 +78,6 @@
 
     },
     "OK" : {
-
-    },
-    "optional" : {
-
-    },
-    "OTP" : {
 
     },
     "password" : {
@@ -98,13 +92,13 @@
     "Pinned SPKI" : {
 
     },
-    "Re-login" : {
-
-    },
     "Rename" : {
 
     },
     "Retry" : {
+
+    },
+    "Save" : {
 
     },
     "Self-signed" : {
@@ -166,6 +160,9 @@
 
     },
     "Valid" : {
+
+    },
+    "Verification Code" : {
 
     },
     "Verify" : {

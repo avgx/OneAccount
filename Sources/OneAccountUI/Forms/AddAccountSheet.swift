@@ -58,10 +58,6 @@ public struct AddAccountSheet<WizardContent: View>: View {
 
     public var body: some View {
         content(flow)
-            #if os(iOS)
-            .navigationBarTitleDisplayMode(.inline)
-            #endif
-            .navigationTitle("")
             .background {
                 WizardSaveWiring(flow: flow, saveInFlight: $saveInFlight, onSave: onSave)
             }
@@ -119,11 +115,7 @@ private struct WizardSaveWiring: View {
         flow.performSave = {
             guard flow.canSave, !saveInFlight else { return }
             saveInFlight = true
-            flow.isSavingAccount = true
-            defer {
-                saveInFlight = false
-                flow.isSavingAccount = false
-            }
+            defer { saveInFlight = false }
             flow.prepareDraftForSave()
             onSave(flow.draft)
             dismiss()

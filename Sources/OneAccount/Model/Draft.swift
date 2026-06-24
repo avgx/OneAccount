@@ -13,6 +13,11 @@ public struct Draft: Equatable, Sendable {
     public var serverTrustPolicy: ServerTrustPolicy = .system
 
     public init() {}
+    
+    public var defaultName: String {
+        guard let resolvedEndpoint, !user.isEmpty else { return "" }
+        return resolvedEndpoint.backend == .cloud ? user : "\(user)@\(resolvedEndpoint.url.pretty())"
+    }
 }
 
 extension ResolvedEndpoint {

@@ -7,7 +7,7 @@ struct LabeledRow<Content: View>: View {
     private let title: LocalizedStringKey
     private let systemImage: String?
     @ViewBuilder private let content: () -> Content
-
+    
     init(
         _ title: LocalizedStringKey,
         systemImage: String? = nil,
@@ -17,7 +17,7 @@ struct LabeledRow<Content: View>: View {
         self.systemImage = systemImage
         self.content = content
     }
-
+    
     var body: some View {
         if #available(iOS 16.0, tvOS 16.0, macOS 13.0, *) {
             LabeledRowModern(title: title, systemImage: systemImage, content: content)
@@ -41,7 +41,7 @@ private struct LabeledRowModern<Content: View>: View {
     let title: LocalizedStringKey
     let systemImage: String?
     @ViewBuilder let content: () -> Content
-
+    
     var body: some View {
         LabeledContent {
             content()
@@ -52,7 +52,7 @@ private struct LabeledRowModern<Content: View>: View {
         }
         .accessibilityElement(children: .combine)
     }
-
+    
     @ViewBuilder
     private var rowLabel: some View {
         if let systemImage {
@@ -68,7 +68,7 @@ private struct LabeledRowLegacy<Content: View>: View {
     let title: LocalizedStringKey
     let systemImage: String?
     @ViewBuilder let content: () -> Content
-
+    
     var body: some View {
         HStack(alignment: .firstTextBaseline) {
             rowLabel
@@ -80,7 +80,7 @@ private struct LabeledRowLegacy<Content: View>: View {
         }
         .accessibilityElement(children: .combine)
     }
-
+    
     @ViewBuilder
     private var rowLabel: some View {
         if let systemImage {
@@ -92,12 +92,12 @@ private struct LabeledRowLegacy<Content: View>: View {
 }
 
 extension View {
-  @ViewBuilder
-  func labeledRowHighlighted(_ highlighted: Bool) -> some View {
-    if highlighted {
-      self.listRowBackground(Color.accentColor.opacity(0.15))
-    } else {
-      self
+    @ViewBuilder
+    func labeledRowHighlighted(_ highlighted: Bool) -> some View {
+        if highlighted {
+            self.listRowBackground(Color.accentColor.opacity(0.15))
+        } else {
+            self
+        }
     }
-  }
 }

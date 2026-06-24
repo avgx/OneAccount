@@ -18,10 +18,6 @@ public struct AccountList: View {
         #endif
     }
     
-//    #if os(iOS) || os(tvOS)
-//    @State private var editMode: EditMode = .inactive
-//    #endif
-
     public init(
         accountManager: AccountManager,
         selectedAccountID: Binding<AccountID?>,

@@ -17,9 +17,9 @@ struct EndpointStep: View {
     }
 
     private var lookUpButtonTitle: LocalizedStringKey {
-        if endpointLookup.isDiscovering {
-            return "Looking up"
-        }
+//        if endpointLookup.isDiscovering {
+//            return "Looking up"
+//        }
         if endpointLookup.canRetry(for: state.urlText) {
             return "Retry"
         }
@@ -72,12 +72,9 @@ struct EndpointStep: View {
 
         ActionButton(
             title: lookUpButtonTitle,
-            isLoading: endpointLookup.isDiscovering,
-            isDisabled: endpointLookup.isDiscovering || isInputEmpty
-        ) {
-            await performLookUp()
-        }
-        .disabled(endpointLookup.isDiscovering || isInputEmpty)
+            isDisabled: endpointLookup.isDiscovering || isInputEmpty,
+            action: performLookUp
+        )
 
         if isInputEmpty {
             staticPresets

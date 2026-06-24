@@ -60,7 +60,6 @@ struct AccountCreationStepContent: View {
             DoneStep(
                 draft: $flow.draft,
                 canSave: flow.canSave,
-                isSaving: flow.isSavingAccount,
                 onSave: {
                     guard let performSave = flow.performSave else { return }
                     try await performSave()

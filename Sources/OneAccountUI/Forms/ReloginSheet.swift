@@ -1,6 +1,7 @@
 import SwiftUI
 import OneAccount
 import DebugThings
+import ButtonKit
 
 /// Re-authenticate a stored cloud or Next account and persist new bearer tokens.
 @MainActor
@@ -41,18 +42,12 @@ public struct ReloginSheet: View {
                 LabeledRow("URL", systemImage: "link") {
                     Text(account.endpoint.url.absoluteString)
                         .font(.caption)
-#if !os(tvOS)
-                        .textSelection(.enabled)
-#endif
                 }
                 if let b = account.endpoint.backend {
                     LabeledRow("Backend", systemImage: "server.rack", value: b.rawValue)
                 }
                 LabeledRow("User", systemImage: "person") {
                     Text(account.credentials.user)
-#if !os(tvOS)
-                        .textSelection(.enabled)
-#endif
                 }
             } header: {
                 Text("Account")
@@ -70,7 +65,7 @@ public struct ReloginSheet: View {
                 }
 
                 Section {
-                    Button(action: { Task { await signIn() } }) {
+                    AsyncButton(action: signIn) {
                         HStack {
                             Spacer()
                             if working {
@@ -88,7 +83,7 @@ public struct ReloginSheet: View {
                 OTPField(code: $otpCode, isTotp: $isTotp, canTotp: otpModes?.contains(.totp) ?? false)
 
                 Section {
-                    Button(action: { Task { await verifyOtp() } }) {
+                    AsyncButton(action: verifyOtp) {
                         HStack {
                             Spacer()
                             if working {
@@ -101,17 +96,6 @@ public struct ReloginSheet: View {
                     }
                     .buttonStyle(.borderedProminent)
                     .disabled(working || otpCode.count < 4)
-                }
-            }
-        }
-        .navigationTitle("Re-login")
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        #endif
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") {
-                    dismiss()
                 }
             }
         }

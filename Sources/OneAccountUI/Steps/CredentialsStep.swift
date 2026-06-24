@@ -29,13 +29,9 @@ struct CredentialsStep: View {
 
         ActionButton(
             title: "Sign in",
-            isLoading: state.isSigningIn,
-            isDisabled: draft.user.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || draft.password.isEmpty || state.isSigningIn
-        ) {
-            try await onSignIn()
-        }
-        .disabled(draft.user.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || draft.password.isEmpty || state.isSigningIn)
-
+            isDisabled: draft.user.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || draft.password.isEmpty,
+            action: onSignIn
+        )
     }
 
     private func resetLocalSignInState() {

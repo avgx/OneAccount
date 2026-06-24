@@ -1,48 +1,38 @@
 import SwiftUI
+import ButtonKit
 import OneAccount
 
-struct AccountEdit: View {
+public struct AccountEdit: View {
     @Environment(\.dismiss) private var dismiss
     let account: AccountRecord
-    let onSave: (String) -> Void
+    let onSave: (String) async throws -> Void
     @State private var name: String
     
-    init(account: AccountRecord, onSave: @escaping (String) -> Void) {
+    public init(account: AccountRecord, onSave: @escaping (String) async throws -> Void) {
         self.account = account
         self.onSave = onSave
         _name = State(initialValue: account.name ?? "")
     }
     
-    var body: some View {
+    public var body: some View {
         Form {
             Section {
-                TextField("Name", text: $name)
-            } footer: {
-                VStack {
-                    LabeledRow("URL", systemImage: "globe", value: account.baseURL.pretty())
-                    LabeledRow("User", systemImage: "person", value: account.user)
+                TextField("Name", text: $name, prompt: Text(account.defaultName))
+            
+                AsyncButton(action: save) {
+                    Label("Save", systemImage: "square.and.arrow.down")
+                        .labelStyle(.titleOnly)
                 }
-                .foregroundStyle(.secondary)
+                .disabled(name == account.name || (name.isEmpty && account.name == nil) )
             }
         }
         .navigationTitle("Rename")
-        .toolbar {
-            ToolbarItem(placement: .cancellationAction) {
-                Button(action: { dismiss() }){
-                    Image(systemName: "xmark")
-                }
-            }
-            ToolbarItem(placement: .confirmationAction) {
-                Button(action: {
-                    onSave(name)
-                    dismiss()
-                }) {
-                    Image(systemName: "checkmark")
-                }
-                .buttonStyle(.borderedProminent)
-            }
-        }
-        
+    }
+    
+    @MainActor
+    func save() async throws {
+        try await onSave(name)
+        dismiss()
     }
 }
 

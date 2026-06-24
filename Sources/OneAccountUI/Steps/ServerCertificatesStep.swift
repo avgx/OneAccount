@@ -39,11 +39,9 @@ struct ServerCertificatesStep: View {
     private var continueButton: some View {
         ActionButton(
             title: "Continue",
-            isLoading: false,
-            isDisabled: isContinueDisabled
-        ) {
-            try await onContinue()
-        }
+            isDisabled: isContinueDisabled,
+            action: onContinue
+        )
         .disabled(isContinueDisabled)
         .onChange(of: policyChoice) { newChoice in
             syncPolicyFromChoice()

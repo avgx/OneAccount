@@ -69,4 +69,8 @@ extension AccountRecord {
         if case .bearer(let s) = auth { return s }
         return nil
     }
+    
+    public var defaultName: String {
+        endpoint.backend == .cloud ? credentials.user : "\(credentials.user)@\(endpoint.url.pretty())"
+    }
 }

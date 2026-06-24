@@ -34,4 +34,9 @@ public final class AccountManager: ObservableObject {
         }
         try await refresh()
     }
+    
+    public func rename(_ id: AccountID, newName: String) async throws {
+        try await store.updateName(accountID: id, newName: newName)
+        try await refresh()
+    }
 }

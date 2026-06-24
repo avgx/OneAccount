@@ -6,16 +6,14 @@ struct DoneStep: View {
 
     @Binding var draft: Draft
     let canSave: Bool
-    let isSaving: Bool
     var onSave: () async throws -> Void
 
     var body: some View {
         Section {
             if let endpoint = draft.resolvedEndpoint {
-                let defaultName = endpoint.backend == .cloud ? draft.user : "\(draft.user)@\(endpoint.url.pretty())"
-                TextField("\(defaultName)", text: $draft.displayName)
+                TextField("Name", text: $draft.displayName, prompt: Text(draft.defaultName))
             } else {
-                TextField("optional", text: $draft.displayName)
+                TextField("Name", text: $draft.displayName)
             }
         } header: {
             Text("Name")
@@ -23,11 +21,8 @@ struct DoneStep: View {
 
         ActionButton(
             title: "Add account",
-            isLoading: isSaving,
-            isDisabled: !canSave || isSaving
-        ) {
-            try await onSave()
-        }
-        .disabled(!canSave || isSaving)
+            isDisabled: !canSave,
+            action: onSave
+        )
     }
 }

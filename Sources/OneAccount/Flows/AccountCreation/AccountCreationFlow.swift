@@ -10,7 +10,6 @@ public final class AccountCreationFlow: ObservableObject {
     @Published public var credentialsState = CredentialsState()
     @Published public var otpState = OTPState()
     @Published public var certificatePreview: CertificatePreview = .idle
-    @Published public var isSavingAccount = false
 
     public let endpointWizardMode: EndpointWizardMode
     private let useCases: AccountCreationUseCases
@@ -145,9 +144,6 @@ public final class AccountCreationFlow: ObservableObject {
             throw AccountCreationFlowError.emptyCredentials
         }
 
-        credentialsState.isSigningIn = true
-        defer { credentialsState.isSigningIn = false }
-
         let policy = serverTrustPolicy ?? (isEndpointLocked ? .system : draft.serverTrustPolicy)
 
         do {
@@ -190,9 +186,7 @@ public final class AccountCreationFlow: ObservableObject {
             throw AccountCreationFlowError.emptyOtp
         }
 
-        otpState.isVerifying = true
         otpState.message = nil
-        defer { otpState.isVerifying = false }
 
         do {
             let session = try await useCases.verifyOtp(

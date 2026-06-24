@@ -120,6 +120,14 @@ public actor AccountStore {
         try await save(account)
     }
 
+    public func updateName(accountID: AccountID, newName: String) async throws {
+        guard var account = try await get(by: accountID) else {
+            throw PersistenceError.accountNotFound(accountID)
+        }
+
+        account.profile.name = newName.isEmpty ? nil : newName
+        try await save(account)
+    }
     // MARK: - Cache Management
 
     public func refreshCache(accountID: AccountID) async throws {
