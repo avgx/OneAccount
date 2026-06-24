@@ -74,7 +74,7 @@ public final class AccountCreationFlow: ObservableObject {
     }
 
     public func resetCredentialState() {
-        credentialsState.message = nil
+        credentialsState.failure = nil
         credentialsState.signInOutcomeKnown = false
         credentialsState.needsOtp = false
         credentialsState.otpCanTotp = true
@@ -97,7 +97,7 @@ public final class AccountCreationFlow: ObservableObject {
     }
 
     public func selectDiscoveryRow(_ row: DiscoveryRowSelection) async {
-        endpointState.message = nil
+        endpointState.failure = nil
         pendingDemoSignIn = false
         applyDiscoverySelection(candidate: row.candidate, seedURL: row.seedURL)
 
@@ -135,13 +135,15 @@ public final class AccountCreationFlow: ObservableObject {
     public func signIn(serverTrustPolicy: ServerTrustPolicy? = nil) async throws {
         resetCredentialState()
         guard let endpoint = draft.resolvedEndpoint else {
-            credentialsState.message = AccountCreationFlowError.missingResolvedEndpoint.localizedDescription
-            throw AccountCreationFlowError.missingResolvedEndpoint
+            let error = AccountCreationFlowError.missingResolvedEndpoint
+            credentialsState.failure = FlowFailure(error)
+            throw error
         }
         let user = draft.user.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !user.isEmpty, !draft.password.isEmpty else {
-            credentialsState.message = AccountCreationFlowError.emptyCredentials.localizedDescription
-            throw AccountCreationFlowError.emptyCredentials
+            let error = AccountCreationFlowError.emptyCredentials
+            credentialsState.failure = FlowFailure(error)
+            throw error
         }
 
         let policy = serverTrustPolicy ?? (isEndpointLocked ? .system : draft.serverTrustPolicy)
@@ -155,7 +157,7 @@ public final class AccountCreationFlow: ObservableObject {
                     serverTrustPolicy: policy
                 )
             )
-            credentialsState.message = nil
+            credentialsState.failure = nil
             credentialsState.signInOutcomeKnown = true
             switch outcome {
             case .authenticated(let session):
@@ -169,7 +171,7 @@ public final class AccountCreationFlow: ObservableObject {
                 step = .otp
             }
         } catch {
-            credentialsState.message = error.localizedDescription
+            credentialsState.failure = FlowFailure(error)
             credentialsState.signInOutcomeKnown = false
             throw error
         }
@@ -177,16 +179,18 @@ public final class AccountCreationFlow: ObservableObject {
 
     public func verifyOtp() async throws {
         guard let endpoint = draft.resolvedEndpoint else {
-            otpState.message = AccountCreationFlowError.missingResolvedEndpoint.localizedDescription
-            throw AccountCreationFlowError.missingResolvedEndpoint
+            let error = AccountCreationFlowError.missingResolvedEndpoint
+            otpState.failure = FlowFailure(error)
+            throw error
         }
         let code = otpState.code.trimmingCharacters(in: .whitespacesAndNewlines)
         guard code.count >= 4 else {
-            otpState.message = AccountCreationFlowError.emptyOtp.localizedDescription
-            throw AccountCreationFlowError.emptyOtp
+            let error = AccountCreationFlowError.emptyOtp
+            otpState.failure = FlowFailure(error)
+            throw error
         }
 
-        otpState.message = nil
+        otpState.failure = nil
 
         do {
             let session = try await useCases.verifyOtp(
@@ -201,7 +205,7 @@ public final class AccountCreationFlow: ObservableObject {
             draft.session = session
             step = .done
         } catch {
-            otpState.message = error.localizedDescription
+            otpState.failure = FlowFailure(error)
             throw error
         }
     }
@@ -260,7 +264,7 @@ public final class AccountCreationFlow: ObservableObject {
         do {
             try await signIn(serverTrustPolicy: .system)
         } catch {
-            // Remain on credentials; credentialsState.message is set by signIn.
+            // Remain on credentials; credentialsState.failure is set by signIn.
         }
     }
 
@@ -282,18 +286,6 @@ public final class AccountCreationFlow: ObservableObject {
 
     private static func shouldPreviewCertificates(for url: URL) -> Bool {
         url.scheme?.lowercased() == "https"
-    }
-
-    private static func endpointMessage(for error: Error) -> String {
-        if let localized = error as? LocalizedError,
-           let description = localized.errorDescription,
-           !description.isEmpty {
-            return description
-        }
-        if let urlError = error as? URLError {
-            return urlError.localizedDescription
-        }
-        return "Could not connect to server."
     }
 }
 

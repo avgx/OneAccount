@@ -13,7 +13,7 @@ struct WizardStepHeader: View {
     
     var body: some View {
         HStack {
-            Text("Step \(current)")
+            Text(L10n.format("step-number", Int64(current)))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
             

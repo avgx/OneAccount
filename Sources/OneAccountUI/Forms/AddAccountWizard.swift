@@ -71,7 +71,7 @@ public struct AddAccountWizard<WizardContent: View>: View {
     @ViewBuilder
     private var wizardToolbarTitle: some View {
         if flow.isEndpointLocked {
-            Text("Add account")
+            Text("add-account", bundle: .module)
                 .font(.headline)
                 .lineLimit(1)
         } else {
@@ -82,7 +82,7 @@ public struct AddAccountWizard<WizardContent: View>: View {
                         Text(endpoint.url.pretty())
                     }
                 } else {
-                    Text("Add account")
+                    Text("add-account", bundle: .module)
                         .font(.headline)
                         .lineLimit(1)
                 }

@@ -9,7 +9,7 @@ struct ActionButton: View {
     var body: some View {
         Section {
             AsyncButton(action: action) {
-                Text(title)
+                Text(title, bundle: .module)
                     .font(.headline)
                     .foregroundColor(.white)
                     .frame(maxWidth: .infinity)

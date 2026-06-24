@@ -11,7 +11,7 @@ public struct CredentialsField: View {
     public init(
         user: Binding<String>,
         password: Binding<String>,
-        title: LocalizedStringKey = "Credentials"
+        title: LocalizedStringKey = "credentials"
     ) {
         self._user = user
         self._password = password
@@ -24,7 +24,7 @@ public struct CredentialsField: View {
 
             PasswordField(text: $password)
         } header: {
-            Text(title)
+            Text(title, bundle: .module)
         }
     }
 }

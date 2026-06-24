@@ -11,16 +11,16 @@ struct DoneStep: View {
     var body: some View {
         Section {
             if let endpoint = draft.resolvedEndpoint {
-                TextField("Name", text: $draft.displayName, prompt: Text(draft.defaultName))
+                TextField(L10n.string("field-name"), text: $draft.displayName, prompt: Text(draft.defaultName))
             } else {
-                TextField("Name", text: $draft.displayName)
+                TextField(L10n.string("field-name"), text: $draft.displayName)
             }
         } header: {
-            Text("Name")
+            Text("field-name", bundle: .module)
         }
 
         ActionButton(
-            title: "Add account",
+            title: "add-account",
             isDisabled: !canSave,
             action: onSave
         )

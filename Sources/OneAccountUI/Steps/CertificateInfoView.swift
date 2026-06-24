@@ -25,7 +25,11 @@ struct CertificateInfoView: View {
     }
 
     private var validityText: String {
-        "\(info.validityRange.notBefore.formatted(date: .abbreviated, time: .omitted)) → \(info.validityRange.notAfter.formatted(date: .abbreviated, time: .omitted))"
+        L10n.format(
+            "validity-range",
+            info.validityRange.notBefore.formatted(date: .abbreviated, time: .omitted),
+            info.validityRange.notAfter.formatted(date: .abbreviated, time: .omitted)
+        )
     }
 
     private var showsSummary: Bool {
@@ -34,31 +38,31 @@ struct CertificateInfoView: View {
 
     var body: some View {
         Group {
-            LabeledRow("Name", systemImage: "signature", value: info.commonName)
+            LabeledRow("field-name", systemImage: "signature", value: info.commonName)
 
             if showsSummary {
                 if let organization = Self.organization(from: info.issuer) {
-                    LabeledRow("Issuer", systemImage: "building.2", value: organization)
+                    LabeledRow("issuer", systemImage: "building.2", value: organization)
                 }
 
-                LabeledRow("Valid", systemImage: "calendar") {
+                LabeledRow("valid", systemImage: "calendar") {
                     Text(validityText)
                         .foregroundColor(isValid ? Color.secondary : Color.red)
                 }
             }
 
             if style == .fingerprints {
-                LabeledRow("SPKI", systemImage: "key") {
+                LabeledRow("spki", systemImage: "key") {
                     monospacedValue(info.spki)
                 }
                 .labeledRowHighlighted(pinHighlight == .spki)
 
-                LabeledRow("SHA-256", systemImage: "barcode") {
+                LabeledRow("sha-256", systemImage: "barcode") {
                     monospacedValue(info.sha256)
                 }
                 .labeledRowHighlighted(pinHighlight == .certificate)
 
-                LabeledRow("Serial", systemImage: "number") {
+                LabeledRow("serial", systemImage: "number") {
                     monospacedValue(info.serialNumber)
                 }
                 .labeledRowHighlighted(pinHighlight == .certificate)
@@ -98,7 +102,7 @@ private struct CertificateCopyMenuModifier: ViewModifier {
     func body(content: Content) -> some View {
         content.contextMenu {
             Button(action: copyCertificateInfo) {
-                Label("Copy", systemImage: "doc.on.doc")
+                Label(L10n.string("copy"), systemImage: "doc.on.doc")
             }
         }
     }

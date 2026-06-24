@@ -56,9 +56,13 @@ private struct LabeledRowModern<Content: View>: View {
     @ViewBuilder
     private var rowLabel: some View {
         if let systemImage {
-            Label(title, systemImage: systemImage)
+            Label {
+                Text(title, bundle: .module)
+            } icon: {
+                Image(systemName: systemImage)
+            }
         } else {
-            Text(title)
+            Text(title, bundle: .module)
         }
     }
 }
@@ -84,9 +88,13 @@ private struct LabeledRowLegacy<Content: View>: View {
     @ViewBuilder
     private var rowLabel: some View {
         if let systemImage {
-            Label(title, systemImage: systemImage)
+            Label {
+                Text(title, bundle: .module)
+            } icon: {
+                Image(systemName: systemImage)
+            }
         } else {
-            Text(title)
+            Text(title, bundle: .module)
         }
     }
 }

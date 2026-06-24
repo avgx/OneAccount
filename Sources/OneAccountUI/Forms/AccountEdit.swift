@@ -17,16 +17,16 @@ public struct AccountEdit: View {
     public var body: some View {
         Form {
             Section {
-                TextField("Name", text: $name, prompt: Text(account.defaultName))
+                TextField(L10n.string("field-name"), text: $name, prompt: Text(account.defaultName))
             
                 AsyncButton(action: save) {
-                    Label("Save", systemImage: "square.and.arrow.down")
+                    Label(L10n.string("save"), systemImage: "square.and.arrow.down")
                         .labelStyle(.titleOnly)
                 }
                 .disabled(name == account.name || (name.isEmpty && account.name == nil) )
             }
         }
-        .navigationTitle("Rename")
+        .navigationTitle(L10n.string("rename"))
     }
     
     @MainActor

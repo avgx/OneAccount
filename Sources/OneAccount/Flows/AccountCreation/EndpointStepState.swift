@@ -2,10 +2,14 @@ import Foundation
 
 public struct EndpointStepState: Equatable, Sendable {
     public var urlText: String = ""
-    public var message: String?
+    public var failure: FlowFailure?
 
-    public init(urlText: String = "", message: String? = nil) {
+    public init(urlText: String = "", failure: FlowFailure? = nil) {
         self.urlText = urlText
-        self.message = message
+        self.failure = failure
+    }
+
+    public static func == (lhs: EndpointStepState, rhs: EndpointStepState) -> Bool {
+        lhs.urlText == rhs.urlText && (lhs.failure == nil) == (rhs.failure == nil)
     }
 }

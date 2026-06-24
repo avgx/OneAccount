@@ -19,23 +19,23 @@ struct CredentialsStep: View {
                     resetLocalSignInState()
                 }
         } header: {
-            Text("Credentials")
+            Text("credentials", bundle: .module)
         } footer: {
-            if let message = state.message, !message.isEmpty {
-                Text(message)
+            if let failure = state.failure {
+                Text(UserFacingErrorMessage.text(for: failure))
                     .foregroundStyle(.secondary)
             }
         }
 
         ActionButton(
-            title: "Sign in",
+            title: "sign-in",
             isDisabled: draft.user.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || draft.password.isEmpty,
             action: onSignIn
         )
     }
 
     private func resetLocalSignInState() {
-        state.message = nil
+        state.failure = nil
         state.signInOutcomeKnown = false
         state.needsOtp = false
         state.otpCanTotp = true

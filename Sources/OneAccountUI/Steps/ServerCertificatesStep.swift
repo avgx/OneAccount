@@ -38,7 +38,7 @@ struct ServerCertificatesStep: View {
 
     private var continueButton: some View {
         ActionButton(
-            title: "Continue",
+            title: "continue",
             isDisabled: isContinueDisabled,
             action: onContinue
         )
@@ -73,19 +73,19 @@ struct ServerCertificatesStep: View {
                     Text(err)
                         .foregroundStyle(.red)
                         .font(.footnote)
-                    Button("Retry") {
+                    Button(L10n.string("retry")) {
                         Task { await onReload(.system) }
                     }
                 }
 
                 if displayedChain.isEmpty, loadErrorMessage == nil {
-                    Text("No certificate data.")
+                    Text("no-certificate-data", bundle: .module)
                         .foregroundStyle(.secondary)
                         .font(.footnote)
                 }
             }
         } header: {
-            Text("TLS chain")
+            Text("tls-chain", bundle: .module)
         }
     }
 
@@ -103,7 +103,7 @@ struct ServerCertificatesStep: View {
                     certificateSectionHeader(for: index, info: info)
                 } footer: {
                     if index == 0, info.isSelfSigned == true {
-                        Label("Self-signed", systemImage: "exclamationmark.triangle")
+                        Label(L10n.string("self-signed"), systemImage: "exclamationmark.triangle")
                             .font(.footnote)
                             .foregroundStyle(.secondary)
                     }
@@ -114,9 +114,13 @@ struct ServerCertificatesStep: View {
 
     private var policySection: some View {
         Section {
-            Picker("Trust policy", selection: $policyChoice) {
+            Picker(L10n.string("trust-policy"), selection: $policyChoice) {
                 ForEach(TrustPolicyChoice.allCases) { option in
-                    Label(option.title, systemImage: option.icon)
+                    Label {
+                        Text(option.titleKey, bundle: .module)
+                    } icon: {
+                        Image(systemName: option.icon)
+                    }
                         .labelStyle(.titleOnly)
                         .tag(option)
                 }
@@ -132,7 +136,8 @@ struct ServerCertificatesStep: View {
     /// Probe errors from the last network load (system policy), or when the chain is still empty.
     private var loadErrorMessage: String? {
         guard preview.chain.isEmpty || policyChoice == .system else { return nil }
-        return preview.failure?.localizedDescription ?? (preview.chain.isEmpty ? preview.pinningMessage : nil)
+        return preview.failure.map { UserFacingErrorMessage.text(for: $0) }
+            ?? (preview.chain.isEmpty ? preview.pinningMessage : nil)
     }
 
     private var isContinueDisabled: Bool {
@@ -175,7 +180,7 @@ struct ServerCertificatesStep: View {
         case .trustEveryone:
             if !preview.chain.isEmpty {
                 policyStatusBanner(
-                    title: "Connection allowed",
+                    titleKey: "connection-allowed",
                     systemImage: "checkmark.shield"
                 )
             }
@@ -189,9 +194,9 @@ struct ServerCertificatesStep: View {
 
         switch policyChoice {
         case .pinningCert:
-            return "Pin \(name) with \(leaf.sha256)"
+            return L10n.format("pin-with-hash", name, leaf.sha256)
         case .pinningSpki:
-            return "Pin \(name) with \(leaf.spki)"
+            return L10n.format("pin-with-hash", name, leaf.spki)
         case .system, .trustEveryone:
             return nil
         }
@@ -222,7 +227,7 @@ struct ServerCertificatesStep: View {
     @ViewBuilder
     private func systemTrustBanner(_ trustStatus: SystemTrustStatus) -> some View {
         Label(
-            trustStatus.isTrusted ? "Trusted by system" : "Not trusted by system",
+            trustStatus.isTrusted ? L10n.string("trusted-by-system") : L10n.string("not-trusted-by-system"),
             systemImage: trustStatus.isTrusted ? "checkmark.shield" : "xmark.shield"
         )
         .font(.footnote)
@@ -242,27 +247,31 @@ struct ServerCertificatesStep: View {
     }
 
     @ViewBuilder
-    private func policyStatusBanner(title: String, systemImage: String) -> some View {
-        Label(title, systemImage: systemImage)
+    private func policyStatusBanner(titleKey: LocalizedStringKey, systemImage: String) -> some View {
+        Label {
+            Text(titleKey, bundle: .module)
+        } icon: {
+            Image(systemName: systemImage)
+        }
             .font(.footnote)
             .foregroundStyle(.secondary)
     }
 
     private func roleLabel(for index: Int) -> String {
         if showsLeafDetailsOnly {
-            return "Server"
+            return L10n.string("cert-role-server")
         }
         return role(for: index, count: preview.chain.count)
     }
 
     private func role(for index: Int, count: Int) -> String {
         if index == 0 {
-            return "Server"
+            return L10n.string("cert-role-server")
         }
         if index == count - 1, count > 1 {
-            return "Root"
+            return L10n.string("cert-role-root")
         }
-        return "Intermediate"
+        return L10n.string("cert-role-intermediate")
     }
 
     private func isCollapsible(index: Int) -> Bool {
@@ -361,16 +370,16 @@ private enum TrustPolicyChoice: String, CaseIterable, Identifiable {
         }
     }
 
-    var title: String {
+    var titleKey: LocalizedStringKey {
         switch self {
         case .system:
-            "System Trust"
+            "system-trust"
         case .trustEveryone:
-            "Trust All"
+            "trust-all"
         case .pinningCert:
-            "Pinned Certificates"
+            "pinned-certificates"
         case .pinningSpki:
-            "Pinned SPKI"
+            "pinned-spki"
         }
     }
 

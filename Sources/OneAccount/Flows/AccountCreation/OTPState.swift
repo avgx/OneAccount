@@ -4,17 +4,24 @@ public struct OTPState: Equatable, Sendable {
     public var code = ""
     public var isTotp = false
     public var canTotp = true
-    public var message: String?
+    public var failure: FlowFailure?
 
     public init(
         code: String = "",
         isTotp: Bool = false,
         canTotp: Bool = true,
-        message: String? = nil
+        failure: FlowFailure? = nil
     ) {
         self.code = code
         self.isTotp = isTotp
         self.canTotp = canTotp
-        self.message = message
+        self.failure = failure
+    }
+
+    public static func == (lhs: OTPState, rhs: OTPState) -> Bool {
+        lhs.code == rhs.code
+            && lhs.isTotp == rhs.isTotp
+            && lhs.canTotp == rhs.canTotp
+            && (lhs.failure == nil) == (rhs.failure == nil)
     }
 }

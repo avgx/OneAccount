@@ -66,11 +66,11 @@ public struct AccountSelector: View {
     public var body: some View {
         if showsSearch {
             content
-                .navigationTitle("accounts")
+                .navigationTitle(L10n.string("accounts-title"))
                 .searchable(text: $searchText)
         } else {
             content
-                .navigationTitle("accounts")
+                .navigationTitle(L10n.string("accounts-title"))
         }
     }
 
@@ -81,7 +81,7 @@ public struct AccountSelector: View {
                 dismiss()
                 onAddAccount()
             } label: {
-                Label("Add account", systemImage: "person.badge.plus")
+                Label(L10n.string("add-account"), systemImage: "person.badge.plus")
             }
         } else {
             EmptyView()

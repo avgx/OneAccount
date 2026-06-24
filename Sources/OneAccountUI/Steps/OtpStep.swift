@@ -14,15 +14,15 @@ struct OtpStep: View {
             canTotp: state.canTotp
         )
 
-        if let message = state.message, !message.isEmpty {
+        if let failure = state.failure {
             Section {
-                Text(message)
+                Text(UserFacingErrorMessage.text(for: failure))
                     .foregroundStyle(.secondary)
             }
         }
 
         ActionButton(
-            title: "Verify",
+            title: "verify",
             isDisabled: state.code.count < 4,
             action: onVerify
         )

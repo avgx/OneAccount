@@ -66,20 +66,20 @@ public struct ReloginForm: View {
                     resetLocalSignInState()
                 }
         } header: {
-            Text("Credentials")
+            Text("credentials", bundle: .module)
         } footer: {
             if let errorMessage, !errorMessage.isEmpty {
                 Text(errorMessage)
                     .foregroundStyle(.red)
             } else {
-                Text("Enter your password to obtain new session.")
+                Text("relogin-password-prompt", bundle: .module)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
         }
 
         ActionButton(
-            title: "Sign in",
+            title: "sign-in",
             isDisabled: working || password.isEmpty,
             action: signIn
         )
@@ -90,7 +90,7 @@ public struct ReloginForm: View {
         OTPField(code: $otpCode, isTotp: $isTotp, canTotp: otpModes?.contains(.totp) ?? false)
 
         ActionButton(
-            title: "Verify",
+            title: "verify",
             isDisabled: working || otpCode.count < 4,
             action: verifyOtp
         )
@@ -112,7 +112,7 @@ public struct ReloginForm: View {
     
     private func signIn() async {
         guard let backend = account.endpoint.backend else {
-            errorMessage = AuthServiceError.unsupportedBackend.localizedDescription
+            errorMessage = UserFacingErrorMessage.text(for: AuthServiceError.unsupportedBackend)
             return
         }
         working = true
@@ -138,7 +138,7 @@ public struct ReloginForm: View {
                 dismiss()
             case .needsOtp(let modes):
                 guard !modes.isEmpty else {
-                    errorMessage = AuthServiceError.invalidResponse.localizedDescription
+                    errorMessage = UserFacingErrorMessage.text(for: AuthServiceError.invalidResponse)
                     return
                 }
                 otpModes = modes
@@ -154,7 +154,7 @@ public struct ReloginForm: View {
         guard let modes = otpModes, !modes.isEmpty else { return }
         let mode: OtpMode = isTotp ? .totp : .otp
         guard modes.contains(mode) else {
-            errorMessage = "Select a supported verification method."
+            errorMessage = L10n.string("select-verification-method")
             return
         }
         working = true

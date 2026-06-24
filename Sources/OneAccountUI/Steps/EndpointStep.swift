@@ -21,14 +21,14 @@ struct EndpointStep: View {
 //            return "Looking up"
 //        }
         if endpointLookup.canRetry(for: state.urlText) {
-            return "Retry"
+            return "retry"
         }
-        return "Look up"
+        return "look-up"
     }
 
     var body: some View {
         Section {
-            TextField("URL of server or cloud", text: $state.urlText)
+            TextField(L10n.string("field-url-prompt"), text: $state.urlText)
                 .urlField()
                 #if os(iOS)
                 .submitLabel(.search)
@@ -42,7 +42,7 @@ struct EndpointStep: View {
                 }
                 .onChange(of: state.urlText) { newValue in
                     onURLChanged()
-                    state.message = nil
+                    state.failure = nil
                     endpointLookup.clearExploredInput()
                     let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
                     if trimmed.isEmpty {
@@ -55,8 +55,8 @@ struct EndpointStep: View {
         } header: {
             EmptyView()
         } footer: {
-            if let message = state.message {
-                Text(message)
+            if let failure = state.failure {
+                Text(UserFacingErrorMessage.text(for: failure))
                     .font(.footnote)
                     .foregroundStyle(.red)
             }

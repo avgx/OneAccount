@@ -10,7 +10,7 @@ public struct UsernameField: View {
     }
 
     public var body: some View {
-        TextField("user", text: $text)
+        TextField(L10n.string("field-user"), text: $text)
             .usernameField()
     }
 }

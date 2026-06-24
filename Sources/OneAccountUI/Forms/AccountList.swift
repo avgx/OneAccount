@@ -45,7 +45,7 @@ public struct AccountList: View {
             }
             .onDelete(perform: deleteAccountsAtOffsets)
         }
-        .navigationTitle("Accounts")
+        .navigationTitle(L10n.string("accounts-title"))
     }
     
     private func dontCommitInvalidateTestOnly(_ id: AccountRecord.ID) {

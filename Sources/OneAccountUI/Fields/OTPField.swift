@@ -16,25 +16,25 @@ public struct OTPField: View {
     public var body: some View {
         Section {
             ZStack(alignment: .trailing) {
-                TextField("Code", text: $code)
+                TextField(L10n.string("field-code"), text: $code)
                     .autocorrectionDisabled()
 
                 pasteButton
             }
         } header: {
             HStack {
-                Text("Verification Code")
+                Text("verification-code", bundle: .module)
                 Spacer()
-                Picker("Code Type", selection: $isTotp) {
-                    Text("Email").tag(false)
-                    Text("TOTP").tag(true)
+                Picker(L10n.string("code-type"), selection: $isTotp) {
+                    Text("email", bundle: .module).tag(false)
+                    Text("totp", bundle: .module).tag(true)
                     //TODO: add SMS for login api v2
                 }
                 .pickerStyle(.segmented)
                 .disabled(!canTotp)
             }
         } footer: {
-            Text("Enter 6-digit code")
+            Text("enter-6-digit-code", bundle: .module)
                 .font(.footnote)
                 .foregroundStyle(.secondary)
         }

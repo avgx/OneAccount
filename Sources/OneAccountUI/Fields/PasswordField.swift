@@ -10,7 +10,7 @@ public struct PasswordField: View {
     }
 
     public var body: some View {
-        SecureField("password", text: $text)
+        SecureField(L10n.string("field-password"), text: $text)
             .passwordField()
     }
 }
