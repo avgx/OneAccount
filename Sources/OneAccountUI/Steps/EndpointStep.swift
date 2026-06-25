@@ -45,7 +45,7 @@ struct EndpointStep: View {
                     state.failure = nil
                     endpointLookup.clearExploredInput()
                     let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
-                    if trimmed.isEmpty {
+                    if trimmed.isEmpty, !endpointLookup.hasStaticSuggestions {
                         endpointLookup.scheduleStaticReload(
                             proposedURLs: suggestions.proposedURLs,
                             demoURLs: suggestions.credentialSeedURLs

@@ -99,6 +99,10 @@ public final class EndpointLookup: ObservableObject, Loggable {
         rows = []
     }
 
+    public var hasStaticSuggestions: Bool {
+        !proposedRows.isEmpty || !demoRows.isEmpty
+    }
+
     /// True when the last typed explore finished for the current trimmed input.
     public func canRetry(for rawURL: String) -> Bool {
         let trimmed = rawURL.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -116,7 +120,6 @@ public final class EndpointLookup: ObservableObject, Loggable {
         rows = []
         proposedRows = []
         demoRows = []
-        isDiscovering = true
 
         exploreTask = Task { [weak self] in
             guard let self else { return }
@@ -181,12 +184,6 @@ public final class EndpointLookup: ObservableObject, Loggable {
         demoURLs: [URL],
         generation requestGeneration: Int
     ) async {
-        defer {
-            if requestGeneration == generation {
-                isDiscovering = false
-            }
-        }
-
         let deadline = DispatchTime.now().uptimeNanoseconds + Self.discoveryBudgetNanoseconds
         let proposedCollector = StaticRowCollector()
         let demoCollector = StaticRowCollector()

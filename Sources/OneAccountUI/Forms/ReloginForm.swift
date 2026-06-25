@@ -146,7 +146,7 @@ public struct ReloginForm: View {
                 otpCode = ""
             }
         } catch {
-            errorMessage = ErrorHelper.connectionFailureMessage(for: error)
+            errorMessage = UserFacingErrorMessage.text(for: error)
         }
     }
 
@@ -171,7 +171,7 @@ public struct ReloginForm: View {
             try await persistSession(session)
             dismiss()
         } catch {
-            errorMessage = ErrorHelper.connectionFailureMessage(for: error)
+            errorMessage = UserFacingErrorMessage.text(for: error)
         }
     }
 
