@@ -43,6 +43,7 @@ struct EndpointStep: View {
                 .onChange(of: state.urlText) { newValue in
                     onURLChanged()
                     state.failure = nil
+                    endpointLookup.cancelPendingWork()
                     endpointLookup.clearExploredInput()
                     let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
                     if trimmed.isEmpty, !endpointLookup.hasStaticSuggestions {
