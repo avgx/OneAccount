@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+
+  pull_request:
+    branches:
+      - main
+      - dev
+
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ios-latest:
+    name: Unit Tests (iOS 26.2, Xcode 26.2)
+    runs-on: macOS-26
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Boot simulator
+        run: xcrun simctl boot "iPhone 17" || true
+
+      - name: Check simulator status
+        run:  xcrun simctl bootstatus "iPhone 17" -b
+
+      - name: Run Tests
+        run: xcodebuild test -scheme "OneAccount" -destination "name=iPhone 17" | xcpretty
+  macos-latest:
+    name: Unit Tests (macOS, Xcode 26.2)
+    runs-on: macOS-26
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Tests
+        run: xcodebuild test -scheme "OneAccount" -destination "platform=macOS" | xcpretty
+  tvos-latest:
+    name: Unit Tests (tvOS 26.2, Xcode 26.2)
+    runs-on: macOS-26
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Boot simulator
+        run: xcrun simctl boot "Apple TV" || true
+
+      - name: Check simulator status
+        run:  xcrun simctl bootstatus "Apple TV" -b
+
+      - name: Run Tests
+        run: xcodebuild test -scheme "OneAccount" -destination "name=Apple TV" | xcbeautify
+  swift-build:
+    name: Swift Build (SPM)
+    runs-on: macOS-26
+    timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: swift build

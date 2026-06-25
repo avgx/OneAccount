@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: macOS-26
+
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.2.app/Contents/Developer
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Package.swift
+        run: swift package dump-package > /dev/null
+
+      - name: Build Release
+        run: swift build -c release
+
+      - name: Archive Sources
+        run: |
+          zip -r OneAccount-${{ github.ref_name }}.zip \
+            Package.swift \
+            Sources \
+            Tests \
+            LICENSE \
+            README.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: OneAccount-${{ github.ref_name }}.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
