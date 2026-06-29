@@ -52,6 +52,7 @@ let package = Package(
                 .product(name: "URLKit", package: "URLKit"),
                 .product(name: "HTTP", package: "Get"),
                 .product(name: "WS", package: "Get"),
+                .product(name: "Logging", package: "swift-log"),
             ]
         ),
         .target(

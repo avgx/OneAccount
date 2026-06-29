@@ -1,6 +1,7 @@
 import Foundation
 import HTTP
 import WS
+import Logging
 import SSLPinning
 
 extension AccountRuntime {
@@ -17,7 +18,8 @@ extension AccountRuntime {
     public func makeWebSocket(
         request: URLRequest,
         configuration: WebSocket.Configuration = .default,
-        requestAdapter: (any RequestAdapter)? = nil
+        requestAdapter: (any RequestAdapter)? = nil,
+        logger: Logger? = nil
     ) -> WebSocket {
         let adapter: any RequestAdapter
         if let requestAdapter {
@@ -30,8 +32,14 @@ extension AccountRuntime {
         return WebSocket(
             request: request,
             configuration: webSocketConfiguration(configuration),
-            requestAdapter: adapter
+            requestAdapter: adapter,
+            logger: Self.resolvedWebSocketLogger(logger)
         )
+    }
+
+    private static func resolvedWebSocketLogger(_ logger: Logger?) -> Logger {
+        if let logger { return logger }
+        return Logger(label: "ws", factory: { _ in SwiftLogNoOpLogHandler() })
     }
 
     /// Converts an HTTP URL (same host/path as REST) to `ws` / `wss`.
