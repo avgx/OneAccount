@@ -13,7 +13,7 @@ extension AccountRuntime {
         return configuration
     }
 
-    /// Builds a ``WebSocket`` with ``account`` TLS policy and optional bearer auth from ``auth``.
+    /// Builds a ``WebSocket`` with ``account`` TLS policy and the same request auth as ``http``.
     public func makeWebSocket(
         request: URLRequest,
         configuration: WebSocket.Configuration = .default,
@@ -25,7 +25,7 @@ extension AccountRuntime {
         } else if let auth {
             adapter = AuthInterceptor(auth: auth)
         } else {
-            adapter = NoopRequestInterceptor()
+            adapter = http.interceptor
         }
         return WebSocket(
             request: request,
