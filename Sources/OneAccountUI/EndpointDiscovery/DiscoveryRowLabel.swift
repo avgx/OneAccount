@@ -1,6 +1,5 @@
 import SwiftUI
 import OneAccount
-import Shimmer
 
 @MainActor
 struct DiscoveryRowLabel: View {
@@ -53,7 +52,6 @@ fileprivate let previewUnknownBackend = DiscoveryCandidate(
             DiscoveryRowLabel(title: "https://example.com", detail: "ok", isError: false)
         }
         .redacted(reason: .placeholder)
-        .shimmering()
     }
 }
 

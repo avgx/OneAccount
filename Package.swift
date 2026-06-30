@@ -36,7 +36,6 @@ let package = Package(
         .package(url: "https://github.com/avgx/Resource.git", from: "1.0.0"),
         .package(url: "https://github.com/avgx/Get.git", from: "6.1.0"),
         .package(url: "https://github.com/Dean151/ButtonKit.git", from: "0.7.1"),
-        .package(url: "https://github.com/markiv/SwiftUI-Shimmer", from: "1.5.1"),
     ],
     targets: [
         .target(
@@ -69,7 +68,6 @@ let package = Package(
                 .product(name: "URLKit", package: "URLKit"),
                 .product(name: "HTTP", package: "Get"),
                 .product(name: "ButtonKit", package: "ButtonKit"),
-                .product(name: "Shimmer", package: "SwiftUI-Shimmer"),
             ],
             resources: [.process("Resources")]
         ),
