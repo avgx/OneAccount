@@ -6,17 +6,20 @@ import URLKit
 public struct AccountProfileHeader<Avatar: View>: View {
     private let account: AccountRecord
     private let showsSwitchAccount: Bool
+    private let vmsVersion: String?
     private let onSwitchAccount: () -> Void
     @ViewBuilder private let avatar: (AccountRecord) -> Avatar
 
     public init(
         account: AccountRecord,
         showsSwitchAccount: Bool,
+        vmsVersion: String? = nil,
         onSwitchAccount: @escaping () -> Void,
         @ViewBuilder avatar: @escaping (AccountRecord) -> Avatar
     ) {
         self.account = account
         self.showsSwitchAccount = showsSwitchAccount
+        self.vmsVersion = vmsVersion
         self.onSwitchAccount = onSwitchAccount
         self.avatar = avatar
     }
@@ -36,6 +39,14 @@ public struct AccountProfileHeader<Avatar: View>: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.3)
 
+            if let vmsVersion, !vmsVersion.isEmpty {
+                Text(vmsVersion)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.3)
+            }
+
             if showsSwitchAccount {
                 SwitchAccountButton(onSwitchAccount: onSwitchAccount)
             }
@@ -48,11 +59,13 @@ extension AccountProfileHeader where Avatar == DefaultAccountAvatar {
     public init(
         account: AccountRecord,
         showsSwitchAccount: Bool,
+        vmsVersion: String? = nil,
         onSwitchAccount: @escaping () -> Void
     ) {
         self.init(
             account: account,
             showsSwitchAccount: showsSwitchAccount,
+            vmsVersion: vmsVersion,
             onSwitchAccount: onSwitchAccount,
             avatar: { DefaultAccountAvatar(account: $0) }
         )

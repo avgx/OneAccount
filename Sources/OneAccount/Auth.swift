@@ -23,6 +23,21 @@ public actor Auth {
     public func setSession(_ session: BackendSession) {
         storage = session
     }
+
+    /// Whether a live session is currently held (updated after refresh).
+    public func hasSession() -> Bool {
+        storage != nil
+    }
+
+    /// Access-token expiry from the live session. Prefer this over ``AccountRecord/session``.
+    public func accessExpiresAt() -> Date? {
+        storage?.accessExpiresAt
+    }
+
+    /// Refresh-token expiry from the live session (Cloud only). Prefer this over ``AccountRecord/session``.
+    public func refreshExpiresAt() -> Date? {
+        storage?.refreshExpiresAt
+    }
         
     public func validAccessToken(refreshIfNeeded: Bool = true) async throws -> String {
         if let token = storage?.accessToken {

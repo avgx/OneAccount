@@ -59,6 +59,15 @@ extension BackendSession {
         case .cloud(let session): return session.accessExpiresAt
         }
     }
+
+    public var refreshExpiresAt: Date? {
+        switch self {
+        case .next:
+            return nil
+        case .cloud(let session):
+            return session.refreshExpiresAt
+        }
+    }
     
     public func shouldRefresh(margin: TimeInterval) -> Bool {
         switch self {
