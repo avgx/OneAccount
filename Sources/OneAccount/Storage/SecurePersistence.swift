@@ -3,20 +3,24 @@ import Security
 
 /// Stores each `AccountRecord` as a JSON blob in the Keychain.
 /// Items are scoped by `kSecAttrService` (see `service`) and `kSecAttrAccount` = `"\(keyPrefix).\(uuid)"`.
+/// Optional `accessGroup` enables sharing with app extensions (NSE) via `keychain-access-groups`.
 final class SecurePersistence: AccountPersistence, @unchecked Sendable {
     private let keyPrefix: String
     private let service: String
+    private let accessGroup: String?
     private let encoder: JSONEncoder
     private let decoder: JSONDecoder
 
     init(
         keyPrefix: String = "OneAccount",
         service: String? = nil,
+        accessGroup: String? = nil,
         encoder: JSONEncoder = JSONEncoder(),
         decoder: JSONDecoder = JSONDecoder()
     ) {
         self.keyPrefix = keyPrefix
         self.service = service ?? keyPrefix
+        self.accessGroup = accessGroup
         self.encoder = encoder
         self.decoder = decoder
     }
@@ -25,16 +29,24 @@ final class SecurePersistence: AccountPersistence, @unchecked Sendable {
         "\(keyPrefix).\(id.uuidString)"
     }
 
-    private let accessibility: CFString = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+    /// After first unlock — required for NSE cold start before device unlock UI.
+    private let accessibility: CFString = kSecAttrAccessibleAfterFirstUnlock
+
+    private func applyAccessGroup(_ query: inout [String: Any]) {
+        if let accessGroup {
+            query[kSecAttrAccessGroup as String] = accessGroup
+        }
+    }
 
     func save(account: AccountRecord) async throws {
         let accountKey = accountKey(for: account.id)
         let data = try encoder.encode(account)
-        let matchQuery: [String: Any] = [
+        var matchQuery: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: accountKey,
         ]
+        applyAccessGroup(&matchQuery)
         let attributes: [String: Any] = [
             kSecValueData as String: data,
             kSecAttrAccessible as String: accessibility,
@@ -88,15 +100,14 @@ final class SecurePersistence: AccountPersistence, @unchecked Sendable {
         }
     }
 
-    // MARK: - Keychain helpers
-
     private func matchingAccountKeys() throws -> [String] {
-        let query: [String: Any] = [
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecMatchLimit as String: kSecMatchLimitAll,
             kSecReturnAttributes as String: true,
         ]
+        applyAccessGroup(&query)
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         if status == errSecItemNotFound {
@@ -124,12 +135,13 @@ final class SecurePersistence: AccountPersistence, @unchecked Sendable {
     }
 
     private func loadPayload(accountKey: String) throws -> AccountRecord? {
-        let query: [String: Any] = [
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: accountKey,
             kSecReturnData as String: true,
         ]
+        applyAccessGroup(&query)
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
         if status == errSecItemNotFound {
@@ -146,11 +158,12 @@ final class SecurePersistence: AccountPersistence, @unchecked Sendable {
     }
 
     private func deleteItem(accountKey: String) throws {
-        let query: [String: Any] = [
+        var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: accountKey,
         ]
+        applyAccessGroup(&query)
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
             throw PersistenceError.writeFailed(NSError(domain: NSOSStatusErrorDomain, code: Int(status)))

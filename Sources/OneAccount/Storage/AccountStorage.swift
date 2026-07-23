@@ -5,7 +5,10 @@ public enum AccountStorage: Sendable {
     /// In-process only; nothing is written to disk.
     case memory
     /// JSON blobs in the Keychain; see ``SecurePersistence``.
-    case keychain(keyPrefix: String, service: String)
+    /// - Parameter accessGroup: Shared keychain access group so NSE can read accounts.
+    ///   Pass `KeychainAccessGroup.fromMainBundle()` when `KEYCHAIN_GROUP_ID` is set in Info.plist;
+    ///   `nil` when `KEYCHAIN_GROUP_ID = *` (app default access group).
+    case keychain(keyPrefix: String, service: String, accessGroup: String? = nil)
 }
 
 extension AccountStorage {
@@ -14,8 +17,8 @@ extension AccountStorage {
         switch self {
         case .memory:
             return nil
-        case .keychain(let keyPrefix, let service):
-            return SecurePersistence(keyPrefix: keyPrefix, service: service)
+        case .keychain(let keyPrefix, let service, let accessGroup):
+            return SecurePersistence(keyPrefix: keyPrefix, service: service, accessGroup: accessGroup)
         }
     }
 
