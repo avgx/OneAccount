@@ -14,6 +14,8 @@ public final class AccountCreationFlow: ObservableObject {
     public let endpointWizardMode: EndpointWizardMode
     private let useCases: AccountCreationUseCases
     private var pendingDemoSignIn = false
+    /// URL text set by discovery selection; ignore the matching `onChange` clear.
+    private var urlTextAppliedFromSelection: String?
     public var performSave: (() async throws -> Void)?
 
     public init(
@@ -211,6 +213,15 @@ public final class AccountCreationFlow: ObservableObject {
     }
 
     public func clearResolvedEndpointOnURLChange() {
+        // Selecting a discovery row updates `urlText` programmatically. On iOS 15 the
+        // TextField `onChange` can fire after selection and would otherwise wipe the
+        // endpoint just applied (breaking demo auto-sign-in / Done canSave).
+        if let applied = urlTextAppliedFromSelection,
+           applied == endpointState.urlText {
+            urlTextAppliedFromSelection = nil
+            return
+        }
+        urlTextAppliedFromSelection = nil
         draft.resolvedEndpoint = nil
         pendingDemoSignIn = false
     }
@@ -235,6 +246,7 @@ public final class AccountCreationFlow: ObservableObject {
         } else {
             endpointState.urlText = candidate.endpoint.url.absoluteString
         }
+        urlTextAppliedFromSelection = endpointState.urlText
 
         draft.resolvedEndpoint = ResolvedEndpoint(
             url: candidate.endpoint.url.removingCredentials().removingFragment(),

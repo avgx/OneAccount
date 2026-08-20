@@ -114,8 +114,9 @@ private struct WizardSaveWiring: View {
     private func wireSaveHandler() {
         flow.performSave = {
             guard flow.canSave, !saveInFlight else { return }
+            // Keep locked for the life of this wizard instance: `onSave` is sync and
+            // may only kick off work, so a `defer { false }` would allow duplicate taps.
             saveInFlight = true
-            defer { saveInFlight = false }
             flow.prepareDraftForSave()
             onSave(flow.draft)
             dismiss()
