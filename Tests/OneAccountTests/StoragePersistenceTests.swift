@@ -15,7 +15,8 @@ private func sampleRecord(id: AccountID = UUID(), user: String = "user") -> Acco
     )
 }
 
-@Test func accountStorageFactoryKeychain() async throws {
+@Test(.disabled("Requires app host with keychain-access-groups entitlement"))
+func accountStorageFactoryKeychain() async throws {
     let service = "Tests.OneAccount.Factory.\(UUID().uuidString)"
     let store = AccountStorage.keychain(keyPrefix: "pfx", service: service).makeStore()
 
@@ -29,7 +30,8 @@ private func sampleRecord(id: AccountID = UUID(), user: String = "user") -> Acco
     try await store.deleteAll()
 }
 
-@Test func securePersistenceRoundTrip() async throws {
+@Test(.disabled("Requires app host with keychain-access-groups entitlement"))
+func securePersistenceRoundTrip() async throws {
     let service = "Tests.OneAccount.Keychain.\(UUID().uuidString)"
     let prefix = "Kc"
     let store = AccountStorage.keychain(keyPrefix: prefix, service: service).makeStore()

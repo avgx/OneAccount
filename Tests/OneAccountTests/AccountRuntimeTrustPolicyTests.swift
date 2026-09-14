@@ -22,7 +22,8 @@ private func sampleRecord(
     )
 }
 
-@Test func serverTrustPolicyPersistsInKeychain() async throws {
+@Test(.disabled("Requires app host with keychain-access-groups entitlement"))
+func serverTrustPolicyPersistsInKeychain() async throws {
     let service = "Tests.OneAccount.TrustPolicy.\(UUID().uuidString)"
     let store = AccountStorage.keychain(keyPrefix: "tp", service: service).makeStore()
     let policy: ServerTrustPolicy = .trustEveryone
