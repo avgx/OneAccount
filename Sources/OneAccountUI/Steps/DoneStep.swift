@@ -10,7 +10,7 @@ struct DoneStep: View {
 
     var body: some View {
         Section {
-            if let endpoint = draft.resolvedEndpoint {
+            if draft.resolvedEndpoint != nil {
                 TextField(L10n.string("field-name"), text: $draft.displayName, prompt: Text(draft.defaultName))
                     .accessibilityLabel(AccessibilityLabels.name)
             } else {
