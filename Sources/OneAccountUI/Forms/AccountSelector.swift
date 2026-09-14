@@ -83,6 +83,7 @@ public struct AccountSelector: View {
             } label: {
                 Label(L10n.string("add-account"), systemImage: "person.badge.plus")
             }
+            .accessibilityLabel(AccessibilityLabels.addAccount)
         } else {
             EmptyView()
         }

@@ -10,5 +10,6 @@ public struct AddAccountButton: View {
 
     public var body: some View {
         Button(L10n.string("add-account"), action: onAddAccount)
+            .accessibilityLabel(AccessibilityLabels.addAccount)
     }
 }

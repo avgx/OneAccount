@@ -18,11 +18,13 @@ public struct AccountEdit: View {
         Form {
             Section {
                 TextField(L10n.string("field-name"), text: $name, prompt: Text(account.defaultName))
+                    .accessibilityLabel(AccessibilityLabels.name)
             
                 AsyncButton(action: save) {
                     Label(L10n.string("save"), systemImage: "square.and.arrow.down")
                         .labelStyle(.titleOnly)
                 }
+                .accessibilityLabel(AccessibilityLabels.save)
                 .disabled(name == account.name || (name.isEmpty && account.name == nil) )
             }
         }

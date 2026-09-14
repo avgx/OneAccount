@@ -26,9 +26,17 @@ struct EndpointStep: View {
         return "look-up"
     }
 
+    private var lookUpAccessibilityLabel: String {
+        if endpointLookup.canRetry(for: state.urlText) {
+            return AccessibilityLabels.retry
+        }
+        return AccessibilityLabels.lookUp
+    }
+
     var body: some View {
         Section {
             TextField(L10n.string("field-url-prompt"), text: $state.urlText)
+                .accessibilityLabel(AccessibilityLabels.url)
                 .urlField()
                 #if os(iOS)
                 .submitLabel(.search)
@@ -73,6 +81,7 @@ struct EndpointStep: View {
 
         ActionButton(
             title: lookUpButtonTitle,
+            accessibilityLabel: lookUpAccessibilityLabel,
             isDisabled: endpointLookup.isDiscovering || isInputEmpty,
             action: performLookUp
         )

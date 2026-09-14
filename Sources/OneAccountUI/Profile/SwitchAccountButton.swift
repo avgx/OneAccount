@@ -10,5 +10,6 @@ public struct SwitchAccountButton: View {
 
     public var body: some View {
         Button(L10n.string("switch-account"), action: onSwitchAccount)
+            .accessibilityLabel(AccessibilityLabels.switchAccount)
     }
 }

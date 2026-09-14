@@ -23,6 +23,7 @@ struct OtpStep: View {
 
         ActionButton(
             title: "verify",
+            accessibilityLabel: AccessibilityLabels.verify,
             isDisabled: state.code.count < 4,
             action: onVerify
         )

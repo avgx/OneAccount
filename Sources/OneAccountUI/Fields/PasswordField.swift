@@ -11,6 +11,7 @@ public struct PasswordField: View {
 
     public var body: some View {
         SecureField(L10n.string("field-password"), text: $text)
+            .accessibilityLabel(AccessibilityLabels.password)
             .passwordField()
     }
 }

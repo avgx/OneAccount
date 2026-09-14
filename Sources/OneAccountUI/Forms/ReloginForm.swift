@@ -80,6 +80,7 @@ public struct ReloginForm: View {
 
         ActionButton(
             title: "sign-in",
+            accessibilityLabel: AccessibilityLabels.signIn,
             isDisabled: working || password.isEmpty,
             action: signIn
         )
@@ -91,6 +92,7 @@ public struct ReloginForm: View {
 
         ActionButton(
             title: "verify",
+            accessibilityLabel: AccessibilityLabels.verify,
             isDisabled: working || otpCode.count < 4,
             action: verifyOtp
         )

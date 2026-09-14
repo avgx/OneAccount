@@ -10,5 +10,6 @@ public struct SignInButton: View {
 
     public var body: some View {
         Button(L10n.string("sign-in"), action: onSignIn)
+            .accessibilityLabel(AccessibilityLabels.signIn)
     }
 }

@@ -12,6 +12,7 @@ public struct URLField: View {
     public var body: some View {
         #if os(iOS) || os(tvOS) || os(visionOS)
         TextField(L10n.string("field-url"), text: $text)
+            .accessibilityLabel(AccessibilityLabels.url)
             .keyboardType(.URL)
             .textContentType(.URL)
             .textInputAutocapitalization(.never)
@@ -20,6 +21,7 @@ public struct URLField: View {
             .ignoresSafeArea(.keyboard, edges: .bottom)
         #else
         TextField(L10n.string("field-url"), text: $text)
+            .accessibilityLabel(AccessibilityLabels.url)
             .autocorrectionDisabled()
             .layoutPriority(1000)
         #endif

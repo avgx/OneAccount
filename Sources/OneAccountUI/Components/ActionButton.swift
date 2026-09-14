@@ -3,6 +3,7 @@ import ButtonKit
 
 struct ActionButton: View {
     let title: LocalizedStringKey
+    let accessibilityLabel: String
     let isDisabled: Bool
     let action: () async throws -> Void
 
@@ -16,6 +17,7 @@ struct ActionButton: View {
                     .background(backgroundColor)
                     .compositingGroup()
             }
+            .accessibilityLabel(accessibilityLabel)
             .buttonStyle(.plain)
             .disabled(isDisabled)
             .allowsHitTestingWhenLoading(false)

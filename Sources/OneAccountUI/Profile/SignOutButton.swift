@@ -24,6 +24,7 @@ public struct SignOutButton: View {
             let next = accountManager.accounts.isEmpty ? nil : accountManager.accounts.first?.id
             await currentAccount.selectAccount(id: next)
         }
+        .accessibilityLabel(AccessibilityLabels.signOut)
         .foregroundStyle(.red)
     }
 }

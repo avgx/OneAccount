@@ -39,6 +39,7 @@ struct ServerCertificatesStep: View {
     private var continueButton: some View {
         ActionButton(
             title: "continue",
+            accessibilityLabel: AccessibilityLabels.continueButton,
             isDisabled: isContinueDisabled,
             action: onContinue
         )
@@ -76,6 +77,7 @@ struct ServerCertificatesStep: View {
                     Button(L10n.string("retry")) {
                         Task { await onReload(.system) }
                     }
+                    .accessibilityLabel(AccessibilityLabels.retry)
                 }
 
                 if displayedChain.isEmpty, loadErrorMessage == nil {

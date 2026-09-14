@@ -29,6 +29,7 @@ struct CredentialsStep: View {
 
         ActionButton(
             title: "sign-in",
+            accessibilityLabel: AccessibilityLabels.signIn,
             isDisabled: draft.user.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || draft.password.isEmpty,
             action: onSignIn
         )

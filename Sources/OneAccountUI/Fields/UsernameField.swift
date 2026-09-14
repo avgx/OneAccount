@@ -11,6 +11,7 @@ public struct UsernameField: View {
 
     public var body: some View {
         TextField(L10n.string("field-user"), text: $text)
+            .accessibilityLabel(AccessibilityLabels.username)
             .usernameField()
     }
 }

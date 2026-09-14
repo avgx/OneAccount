@@ -17,6 +17,7 @@ public struct OTPField: View {
         Section {
             ZStack(alignment: .trailing) {
                 TextField(L10n.string("field-code"), text: $code)
+                    .accessibilityLabel(AccessibilityLabels.code)
                     .autocorrectionDisabled()
 
                 pasteButton

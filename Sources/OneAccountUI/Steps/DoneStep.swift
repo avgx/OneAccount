@@ -12,8 +12,10 @@ struct DoneStep: View {
         Section {
             if let endpoint = draft.resolvedEndpoint {
                 TextField(L10n.string("field-name"), text: $draft.displayName, prompt: Text(draft.defaultName))
+                    .accessibilityLabel(AccessibilityLabels.name)
             } else {
                 TextField(L10n.string("field-name"), text: $draft.displayName)
+                    .accessibilityLabel(AccessibilityLabels.name)
             }
         } header: {
             Text("field-name", bundle: .module)
@@ -21,6 +23,7 @@ struct DoneStep: View {
 
         ActionButton(
             title: "add-account",
+            accessibilityLabel: AccessibilityLabels.addAccount,
             isDisabled: !canSave,
             action: onSave
         )
