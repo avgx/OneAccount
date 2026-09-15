@@ -18,7 +18,11 @@ struct ActionButton: View {
                     .compositingGroup()
             }
             .accessibilityLabel(accessibilityLabel)
+            #if os(tvOS)
+            .buttonStyle(.card)
+            #else
             .buttonStyle(.plain)
+            #endif
             .disabled(isDisabled)
             .allowsHitTestingWhenLoading(false)
             .throwableButtonStyle(.shake)

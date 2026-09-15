@@ -57,7 +57,11 @@ public struct AccountSelector: View {
                             }
                     }
                 }
+                #if os(tvOS)
+                .buttonStyle(.card)
+                #else
                 .buttonStyle(.plain)
+                #endif
                 addAccountButton
             }
         }
