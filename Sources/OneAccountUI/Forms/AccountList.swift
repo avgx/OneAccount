@@ -40,7 +40,9 @@ public struct AccountList: View {
                         }
                     }
                 }
+                #if !os(tvOS)
                 .buttonStyle(.plain)
+                #endif
                 .allowsHitTesting(!isEditing)                
             }
             .onDelete(perform: deleteAccountsAtOffsets)

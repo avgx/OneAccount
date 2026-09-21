@@ -8,6 +8,18 @@ struct ActionButton: View {
     let action: () async throws -> Void
 
     var body: some View {
+        #if os(tvOS)
+        Section {
+            AsyncButton(action: action) {
+                Text(title, bundle: .module)
+            }
+            .accessibilityLabel(accessibilityLabel)
+            .disabled(isDisabled)
+            .allowsHitTestingWhenLoading(false)
+            .throwableButtonStyle(.shake)
+            .asyncButtonStyle(.overlay)
+        }
+        #else
         Section {
             AsyncButton(action: action) {
                 Text(title, bundle: .module)
@@ -18,17 +30,14 @@ struct ActionButton: View {
                     .compositingGroup()
             }
             .accessibilityLabel(accessibilityLabel)
-            #if os(tvOS)
-            .buttonStyle(.card)
-            #else
             .buttonStyle(.plain)
-            #endif
             .disabled(isDisabled)
             .allowsHitTestingWhenLoading(false)
             .throwableButtonStyle(.shake)
             .asyncButtonStyle(.overlay)
         }
         .listModifiers(isDisabled: isDisabled)
+        #endif
     }
 
     private var backgroundColor: Color {
@@ -48,3 +57,34 @@ extension View {
         #endif
     }
 }
+
+#if os(iOS) || os(tvOS)
+#Preview("Enabled") {
+    Form {
+        ActionButton(
+            title: "sign-in",
+            accessibilityLabel: AccessibilityLabels.signIn,
+            isDisabled: false,
+            action: {}
+        )
+        
+        ActionButton(
+            title: "sign-in",
+            accessibilityLabel: AccessibilityLabels.signIn,
+            isDisabled: false,
+            action: {}
+        )
+    }
+}
+
+#Preview("Disabled") {
+    Form {
+        ActionButton(
+            title: "continue",
+            accessibilityLabel: AccessibilityLabels.continueButton,
+            isDisabled: true,
+            action: {}
+        )
+    }
+}
+#endif

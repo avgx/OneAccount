@@ -21,6 +21,8 @@ struct ResolvedEndpointRow: View {
                 Spacer()
             }
         }
+        #if !os(tvOS)
         .buttonStyle(.plain)
+        #endif
     }
 }
