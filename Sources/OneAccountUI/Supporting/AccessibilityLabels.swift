@@ -16,4 +16,9 @@ public enum AccessibilityLabels {
     public static let password = "Password"
     public static let code = "Code"
     public static let name = "Name"
+    public static let trustPolicy = "Trust policy"
+    public static let systemTrust = "System Trust"
+    public static let pinnedCertificates = "Pinned Certificates"
+    public static let pinnedSpki = "Pinned SPKI"
+    public static let trustAll = "Trust All"
 }

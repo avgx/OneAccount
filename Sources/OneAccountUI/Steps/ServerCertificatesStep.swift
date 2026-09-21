@@ -124,10 +124,12 @@ struct ServerCertificatesStep: View {
                         Image(systemName: option.icon)
                     }
                         .labelStyle(.titleOnly)
+                        .accessibilityLabel(option.accessibilityLabel)
                         .tag(option)
                 }
             }
             .pickerStyle(.menu)
+            .accessibilityLabel(AccessibilityLabels.trustPolicy)
         } footer: {
             Text(policy.localizedDescription())
                 .font(.footnote)
@@ -393,6 +395,19 @@ private enum TrustPolicyChoice: String, CaseIterable, Identifiable {
             "shield.slash"
         case .pinningCert, .pinningSpki:
             "key.shield"
+        }
+    }
+
+    var accessibilityLabel: String {
+        switch self {
+        case .system:
+            AccessibilityLabels.systemTrust
+        case .trustEveryone:
+            AccessibilityLabels.trustAll
+        case .pinningCert:
+            AccessibilityLabels.pinnedCertificates
+        case .pinningSpki:
+            AccessibilityLabels.pinnedSpki
         }
     }
 }
