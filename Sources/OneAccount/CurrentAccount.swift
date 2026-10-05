@@ -51,7 +51,7 @@ public final class CurrentAccount: ObservableObject {
         selectedId = nil
 
         if let id, let account = try? await store.get(by: id) {
-            let built = await currentFactory().build(account: account) { [weak self] accountID in
+            let built = await currentFactory().build(account: account, configuration: .custom120) { [weak self] accountID in
                 Task { @MainActor in
                     self?.handleRefreshFailed(for: accountID)
                 }
@@ -86,7 +86,7 @@ public final class CurrentAccount: ObservableObject {
     /// Called when `serverTrustPolicy` or `logger` changes.
     private func rebuildRuntime() async {
         guard let id = selectedId, let account = try? await store.get(by: id) else { return }
-        let built = await currentFactory().build(account: account) { [weak self] accountID in
+        let built = await currentFactory().build(account: account, configuration: .custom120) { [weak self] accountID in
             Task { @MainActor in
                 self?.handleRefreshFailed(for: accountID)
             }

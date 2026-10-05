@@ -21,6 +21,7 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
 
     public func build(
         account: AccountRecord,
+        configuration: URLSessionConfiguration = .custom120,
         onAuthRefreshFailed: @escaping @Sendable (AccountID) -> Void
     ) async -> AccountRuntime? {
         let statistics = PathStatistics()
@@ -34,7 +35,8 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
             for: account,
             auth: auth,
             statistics: statistics,
-            onAuthRefreshFailed: onAuthRefreshFailed
+            onAuthRefreshFailed: onAuthRefreshFailed,
+            configuration: configuration
         ) else {
             return nil
         }
@@ -85,7 +87,8 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
         for account: AccountRecord,
         auth: Auth?,
         statistics: PathStatistics,
-        onAuthRefreshFailed: @escaping @Sendable (AccountID) -> Void
+        onAuthRefreshFailed: @escaping @Sendable (AccountID) -> Void,
+        configuration: URLSessionConfiguration = .custom120,
     ) -> HTTPClient? {
         let accountID = account.id
         switch account.endpoint.backend {
@@ -95,7 +98,7 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
                 onAuthRefreshFailed(accountID)
             }
             return HTTPClient(
-                configuration: .custom,
+                configuration: configuration,
                 redirectDisposition: .doNotFollow,
                 serverTrustPolicy: account.serverTrustPolicy,
                 interceptor: interceptor,
@@ -105,7 +108,7 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
         case .nextLegacy, .intl:
             precondition(!account.credentials.password.isEmpty)
             return HTTPClient(
-                configuration: .custom,
+                configuration: configuration,
                 redirectDisposition: .doNotFollow,
                 serverTrustPolicy: account.serverTrustPolicy,
                 interceptor: FixedAuthInterceptor(

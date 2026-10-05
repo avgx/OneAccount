@@ -16,6 +16,7 @@ public protocol AccountRuntimeBuilding: Sendable {
     ///     re-login UI, keyed by `AccountID`.
     func build(
         account: AccountRecord,
+        configuration: URLSessionConfiguration,
         onAuthRefreshFailed: @escaping @Sendable (AccountID) -> Void
     ) async -> AccountRuntime?
 }
