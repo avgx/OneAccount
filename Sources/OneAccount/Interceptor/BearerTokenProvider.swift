@@ -20,6 +20,8 @@ public final class AuthBearerTokenProvider: BearerTokenProvider, @unchecked Send
     }
 
     public func refreshToken() async throws {
-        _ = try await auth.refresh()
+        try await SessionRefreshCause.$isUnauthorizedRecovery.withValue(true) {
+            _ = try await auth.refresh()
+        }
     }
 }

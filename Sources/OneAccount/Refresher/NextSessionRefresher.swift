@@ -4,8 +4,11 @@ import RequestResponse
 import JWTDecode
 import DebugThings
 import SSLPinning
+import Logging
 
 public struct NextSessionRefresher: SessionRefresher {
+    private static let log = Logger(label: "OneAccount.NextSessionRefresher")
+
     private let baseURL: URL
     private let credentials: Credentials?
     private let serverTrustPolicy: ServerTrustPolicy
@@ -34,7 +37,11 @@ public struct NextSessionRefresher: SessionRefresher {
 
         if canRenew {
             do {
-                return try await renew(bearerToken: session.authToken)
+                let renewed = try await renew(bearerToken: session.authToken)
+                if SessionRefreshCause.isUnauthorizedRecovery {
+                    Self.log.warning("401 recovered by renew2; stored password was not checked")
+                }
+                return renewed
             } catch {
                 guard let creds = credentials else { throw error }
                 return try await authenticate(user: creds.user, password: creds.password)
@@ -78,8 +85,10 @@ public struct NextSessionRefresher: SessionRefresher {
             with: builder
         ).value
 
-        guard response.error_code == .AUTHENTICATE_CODE_OK,
-              let token = response.token_value else {
+        guard response.error_code == .AUTHENTICATE_CODE_OK else {
+            throw NextAuthFailureMapping.authServiceError(response: response)
+        }
+        guard let token = response.token_value else {
             throw URLError(.userAuthenticationRequired)
         }
 

@@ -111,10 +111,10 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
                 configuration: configuration,
                 redirectDisposition: .doNotFollow,
                 serverTrustPolicy: account.serverTrustPolicy,
-                interceptor: FixedAuthInterceptor(
-                    authorization: .basic(
-                        .init(user: account.credentials.user, password: account.credentials.password)
-                    )
+                interceptor: BasicAuthInterceptor(
+                    user: account.credentials.user,
+                    password: account.credentials.password,
+                    onAuthRejected: { onAuthRefreshFailed(accountID) }
                 ),
                 observer: statistics,
                 logger: logger ?? NoopURLSessionTaskLogger()

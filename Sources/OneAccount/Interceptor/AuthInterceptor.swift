@@ -32,7 +32,9 @@ public final class AuthInterceptor: RequestInterceptor, @unchecked Sendable {
             try await bearerTokenProvider.refreshToken()
             return true
         } catch {
-            onRefreshFailed?()
+            if AuthRejection.isRejection(error) {
+                onRefreshFailed?()
+            }
             return false
         }
     }

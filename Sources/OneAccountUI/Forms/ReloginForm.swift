@@ -131,12 +131,7 @@ public struct ReloginForm: View {
             )
             switch outcome {
             case .authenticated(let session):
-                if let session {
-                    try await persistSession(session)
-                } else {
-                    try await persistPassword(password)
-                }
-                
+                try await persistSignIn(password: password, session: session)
                 dismiss()
             case .needsOtp(let modes):
                 guard !modes.isEmpty else {
@@ -170,23 +165,19 @@ public struct ReloginForm: View {
                 mode: mode,
                 serverTrustPolicy: account.serverTrustPolicy
             )
-            try await persistSession(session)
+            try await persistSignIn(password: password, session: session)
             dismiss()
         } catch {
             errorMessage = UserFacingErrorMessage.text(for: error)
         }
     }
 
-    private func persistSession(_ session: BackendSession?) async throws {
-        try await accountManager.store.updateSession(accountID: account.id, session: session)
-        if currentAccount.selectedId == account.id {
-            await currentAccount.selectAccount(id: account.id)
-        }
-        try await accountManager.refresh()
-    }
-    
-    private func persistPassword(_ password: String) async throws {
+    /// Stores the password that just signed in, then the bearer session when the backend issued one.
+    private func persistSignIn(password: String, session: BackendSession?) async throws {
         try await accountManager.store.updatePassword(accountID: account.id, password: password)
+        if let session {
+            try await accountManager.store.updateSession(accountID: account.id, session: session)
+        }
         if currentAccount.selectedId == account.id {
             await currentAccount.selectAccount(id: account.id)
         }
