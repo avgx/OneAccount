@@ -2,8 +2,8 @@ import Foundation
 import HTTP
 
 /// Failures that mean the stored credentials cannot continue the session.
-enum AuthRejection {
-    static func isRejection(_ error: Error) -> Bool {
+public enum AuthRejection {
+    public static func isRejection(_ error: Error) -> Bool {
         if let urlError = error as? URLError, urlError.code == .userAuthenticationRequired {
             return true
         }

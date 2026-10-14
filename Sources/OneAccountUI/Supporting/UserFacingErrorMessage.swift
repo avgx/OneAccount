@@ -24,6 +24,9 @@ enum UserFacingErrorMessage {
         if let discoveryError = error as? WizardEndpointDiscovery.DiscoveryFailure {
             return text(for: discoveryError)
         }
+        if let endpointError = error as? ChangeEndpointFailure {
+            return text(for: endpointError)
+        }
         if let certError = error as? CertificatePreviewFailure {
             return text(for: certError)
         }
@@ -84,6 +87,15 @@ enum UserFacingErrorMessage {
             L10n.string("error.2fa-required")
         case .nextAuthRejected(let code, let detail):
             text(forNextAuthCode: code, detail: detail)
+        }
+    }
+
+    private static func text(for error: ChangeEndpointFailure) -> String {
+        switch error {
+        case .unsupportedAccount:
+            L10n.string("error.endpoint-not-movable")
+        case .differentBackend:
+            L10n.string("error.different-backend")
         }
     }
 

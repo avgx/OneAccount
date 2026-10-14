@@ -11,6 +11,7 @@ public enum AccessibilityLabels {
     public static let save = "Save"
     public static let switchAccount = "Switch account"
     public static let signOut = "Sign out"
+    public static let changeServerAddress = "Change server address"
     public static let url = "URL"
     public static let username = "Username"
     public static let password = "Password"

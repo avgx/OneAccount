@@ -120,6 +120,16 @@ public actor AccountStore {
         try await save(account)
     }
 
+    /// Replaces the account URL. Backend, password, session, and ``serverTrustPolicy`` stay as stored.
+    public func updateEndpoint(accountID: AccountID, url: URL) async throws {
+        guard var account = try await get(by: accountID) else {
+            throw PersistenceError.accountNotFound(accountID)
+        }
+
+        account.endpoint.url = url
+        try await save(account)
+    }
+
     public func updateName(accountID: AccountID, newName: String) async throws {
         guard var account = try await get(by: accountID) else {
             throw PersistenceError.accountNotFound(accountID)
