@@ -96,7 +96,7 @@ public struct ChangeEndpointForm: View {
             Section {
                 Text(account.endpoint.url.pretty())
                     .foregroundStyle(.secondary)
-                    .textSelection(.enabled)
+                    //.textSelection(.enabled)
             } header: {
                 Text("change-endpoint-current", bundle: .module)
             }
