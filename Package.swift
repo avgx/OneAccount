@@ -34,7 +34,7 @@ let package = Package(
         .package(url: "https://github.com/avgx/URLKit.git", from: "1.0.2"),
         .package(url: "https://github.com/avgx/DebugThings.git", from: "2.0.0"),
         .package(url: "https://github.com/avgx/Resource.git", from: "1.0.0"),
-        .package(url: "https://github.com/avgx/Get.git", from: "6.1.0"),
+        .package(url: "https://github.com/avgx/Get.git", from: "7.0.0"),
         .package(url: "https://github.com/Dean151/ButtonKit.git", from: "0.7.1"),
     ],
     targets: [
