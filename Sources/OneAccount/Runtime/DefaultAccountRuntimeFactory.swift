@@ -25,6 +25,7 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
         onAuthRefreshFailed: @escaping @Sendable (AccountID) -> Void
     ) async -> AccountRuntime? {
         let statistics = PathStatistics()
+        let requestFailures = RequestFailureObserver()
         let auth = makeAuth(for: account)
 
         if let auth, case .bearer(let session) = account.auth {
@@ -35,13 +36,20 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
             for: account,
             auth: auth,
             statistics: statistics,
+            requestFailures: requestFailures,
             onAuthRefreshFailed: onAuthRefreshFailed,
             configuration: configuration
         ) else {
             return nil
         }
 
-        return AccountRuntime(account: account, auth: auth, http: http, statistics: statistics)
+        return AccountRuntime(
+            account: account,
+            auth: auth,
+            http: http,
+            statistics: statistics,
+            requestFailures: requestFailures
+        )
     }
 
     // MARK: - Auth
@@ -87,6 +95,7 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
         for account: AccountRecord,
         auth: Auth?,
         statistics: PathStatistics,
+        requestFailures: RequestFailureObserver,
         onAuthRefreshFailed: @escaping @Sendable (AccountID) -> Void,
         configuration: URLSessionConfiguration = .custom120,
     ) -> HTTPClient? {
@@ -102,7 +111,7 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
                 redirectDisposition: .doNotFollow,
                 serverTrustPolicy: account.serverTrustPolicy,
                 interceptor: interceptor,
-                observer: statistics,
+                observer: FanoutRequestObserver(observers: [statistics, requestFailures]),
                 logger: logger ?? NoopURLSessionTaskLogger()
             )
         case .nextLegacy, .intl:
@@ -116,7 +125,7 @@ public struct DefaultAccountRuntimeFactory: AccountRuntimeBuilding, @unchecked S
                     password: account.credentials.password,
                     onAuthRejected: { onAuthRefreshFailed(accountID) }
                 ),
-                observer: statistics,
+                observer: FanoutRequestObserver(observers: [statistics, requestFailures]),
                 logger: logger ?? NoopURLSessionTaskLogger()
             )
         case .none:

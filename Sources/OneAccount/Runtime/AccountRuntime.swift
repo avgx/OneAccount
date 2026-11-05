@@ -10,6 +10,8 @@ public actor AccountRuntime {
     public let auth: Auth?
     public let http: HTTPClient
     public let statistics: PathStatistics
+    /// Failure tap installed on `http`. Nil when this runtime reuses another runtime's client.
+    public let requestFailures: RequestFailureObserver?
 
     private var isShutdown = false
 
@@ -17,12 +19,14 @@ public actor AccountRuntime {
         account: AccountRecord,
         auth: Auth?,
         http: HTTPClient,
-        statistics: PathStatistics
+        statistics: PathStatistics,
+        requestFailures: RequestFailureObserver? = nil
     ) {
         self.account = account
         self.auth = auth
         self.http = http
         self.statistics = statistics
+        self.requestFailures = requestFailures
     }
 
     /// Tear down the runtime: cancel in-flight refresh, reset statistics.
